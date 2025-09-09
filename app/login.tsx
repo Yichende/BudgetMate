@@ -13,9 +13,13 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
 
   const submit = async () => {
-    if (!email || !password) return;
-    const ok = await login(email, password);
-    if (ok) router.replace("/");
+    try {
+      if (!email || !password) return;
+      const ok = await login(email, password);
+      if (ok) router.replace("/");
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   return (
