@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -88,7 +88,6 @@ export default function BillsOfDatePage() {
   );
 
   const remove = useTxStore((s) => s.remove);
-  const load = useTxStore((s) => s.load);
   const update = useTxStore((s) => s.update);
 
   // 编辑 Modal 状态
@@ -99,10 +98,6 @@ export default function BillsOfDatePage() {
   const [editNote, setEditNote] = useState<string>("");
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-
-  useEffect(() => {
-    load();
-  }, []);
 
   const openEdit = (item: Transaction) => {
     setEditing(item);
@@ -154,7 +149,7 @@ export default function BillsOfDatePage() {
           renderHiddenItem={({ item }) => (
             <HiddenItem item={item} onEdit={openEdit} onDelete={setConfirmDeleteId} />
           )}
-          rightOpenValue={-150}
+          rightOpenValue={-125}
           disableRightSwipe
           initialNumToRender={10}
           maxToRenderPerBatch={10}
@@ -169,7 +164,7 @@ export default function BillsOfDatePage() {
           onDismiss={() => setEditing(null)}
           style={{ borderRadius: 12 }}
         >
-          <Dialog.Title>编辑账单</Dialog.Title>
+          <Dialog.Title style={{color: '#8A0993', fontWeight: 700 }}>编辑账单</Dialog.Title>
           <Dialog.ScrollArea>
             <KeyboardAvoidingView
               behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -188,7 +183,7 @@ export default function BillsOfDatePage() {
                     <RadioButton.Item label="收入" value="income" />
                   </RadioButton.Group>
 
-                  <Text variant="titleMedium" style={{ marginBottom: 10 }}>
+                  <Text variant="titleMedium" style={styles.dialogTitle}>
                     金额及备注
                   </Text>
                   <Divider />
@@ -197,7 +192,6 @@ export default function BillsOfDatePage() {
                     keyboardType="numeric"
                     value={editAmount}
                     onChangeText={setEditAmount}
-                    style={{ marginTop: 10 }}
                   />
                   <TextInput
                     label="备注"
@@ -263,7 +257,7 @@ export default function BillsOfDatePage() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FFF8E1" },
-  dialogTitle: { marginTop: 10 },
+  dialogTitle: { marginTop: 10, fontWeight: 700 },
   empty: {
     flex: 1,
     alignItems: "center",

@@ -1,7 +1,7 @@
 import { Circle, Text as SkiaText, useFont } from "@shopify/react-native-skia";
 import dayjs from "dayjs";
 import { router } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Dimensions, ScrollView, StyleSheet, View } from "react-native";
 import { Calendar, LocaleConfig } from "react-native-calendars";
 import { Appbar, Button, Card, Text } from "react-native-paper";
@@ -10,11 +10,13 @@ import Animated, {
   FadeInUp,
   runOnJS,
   useAnimatedReaction,
-  useDerivedValue
+  useDerivedValue,
 } from "react-native-reanimated";
 import {
+  Area,
   BarGroup,
   CartesianChart,
+  CartesianChartRef,
   Line,
   useChartPressState,
 } from "victory-native";
@@ -88,11 +90,19 @@ export default function Home() {
 
   // 图表元素
   const font = useFont(inter, 12);
-  const { state } = useChartPressState({ x: "", y: { y: 0 } });
+  const { state: LineState } = useChartPressState({ x: "", y: { y: 0 } });
+  const { state: BarState } = useChartPressState({
+    x: "",
+    y: { income: 0, expense: 0 },
+  });
 
   // 按压
   const [pressing, setPressing] = useState(false);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+
+  const chartRef = useRef<CartesianChartRef<any>>(null);
+  const [selectedBarIndex, setSelectedBarIndex] = useState<number | null>(null);
+  const [showBarTooltip, setShowBarTooltip] = useState(false);
 
   // 每日趋势数据
   const dailySeries = useMemo(() => {
@@ -135,8 +145,8 @@ export default function Home() {
 
   useAnimatedReaction(
     () => ({
-      idx: state.matchedIndex.value,
-      active: state.isActive.value,
+      idx: LineState.matchedIndex.value,
+      active: LineState.isActive.value,
     }),
     (curr, prev) => {
       if (!prev || curr.active !== prev.active) {
@@ -148,7 +158,35 @@ export default function Home() {
     }
   );
 
-  const ToolTip = ({
+  const handleBarPress = (index: number) => {
+    setSelectedBarIndex(index);
+    setShowBarTooltip(true);
+
+    // 自动隐藏提示
+    setTimeout(() => {
+      setShowBarTooltip(false);
+    }, 5000);
+  };
+
+  const handleChartContainerPress = (event: any) => {
+    if (!chartRef.current || !monthlySeries.data.length) return;
+
+    // 获取点击位置相对于图表的坐标
+    const { locationX, locationY } = event.nativeEvent;
+
+    // 使用 ref 模拟触摸事件
+    chartRef.current?.actions.handleTouch(BarState, locationX, locationY);
+
+    // 检查是否有匹配的柱子
+    if (BarState.matchedIndex.value >= 0) {
+      handleBarPress(BarState.matchedIndex.value);
+    } else {
+      // 点击空白处隐藏提示
+      setShowBarTooltip(false);
+    }
+  };
+
+  const LineToolTip = ({
     x,
     y,
     value,
@@ -160,7 +198,11 @@ export default function Home() {
     date: string;
   }) => {
     if (!font) return null;
-    const textX = useDerivedValue(() => x.value + 8, [x]);
+    const textX = useDerivedValue(() => {
+      const padding = 100; // 预留宽度，避免超出
+      const maxX = screenWidth - padding;
+      return Math.min(x.value + 8, maxX);
+    }, [x]);
     const textY = useDerivedValue(() => y.value - 8, [y]);
     return (
       <>
@@ -188,7 +230,7 @@ export default function Home() {
       await load();
       setLoading(false);
     };
-    
+
     initData();
   }, []);
 
@@ -280,7 +322,7 @@ export default function Home() {
                     xKey="x"
                     yKeys={["y"]}
                     domainPadding={{ left: 30, right: 30, top: 20 }}
-                    chartPressState={state}
+                    chartPressState={LineState}
                     axisOptions={{
                       font,
                       tickCount: { y: 10, x: 6 }, // 控制Y轴10个刻度，X轴刻度数量将通过tickValues单独指定
@@ -291,20 +333,28 @@ export default function Home() {
                         return `${date.getMonth() + 1}.${date.getDate()}`;
                       },
                     }}>
-                    {({ points }) => (
+                    {({ points, chartBounds }) => (
                       <>
                         <Line
                           points={points.y}
                           color="#FF6B6B"
-                          strokeWidth={1}
+                          strokeWidth={2}
                           animate={{ type: "spring" }}
+                          curveType="linear"
+                        />
+                        <Area
+                          points={points.y}
+                          color="#FDCDC5"
+                          y0={chartBounds.bottom}
+                          animate={{ type: "spring" }}
+                          curveType="linear"
                         />
                         {pressing &&
                           hoverIndex !== null &&
                           dailySeries.dataPoints[hoverIndex] && (
-                            <ToolTip
-                              x={state.x.position}
-                              y={state.y.y.position}
+                            <LineToolTip
+                              x={LineState.x.position}
+                              y={LineState.y.y.position}
                               value={dailySeries.dataPoints[hoverIndex].y}
                               date={dailySeries.dataPoints[hoverIndex].x}
                             />
@@ -325,31 +375,71 @@ export default function Home() {
           <Card.Content>
             <Text variant="titleMedium">近6个月收支对比</Text>
             {monthlySeries.data && monthlySeries.data.length > 0 ? (
-              <View style={{ height: 240, width: screenWidth - 40 }}>
+              <View
+                style={{ height: 240, width: screenWidth - 40 }}
+                onTouchStart={handleChartContainerPress}>
+                {/* 中央上方的数据展示 */}
+                {showBarTooltip && selectedBarIndex !== null && (
+                  <View style={styles.centeredTooltip}>
+                    <View style={styles.tooltipContent}>
+                      <Text style={[styles.tooltipText, styles.tooltipTitle]}>
+                        {monthlySeries.data[selectedBarIndex].month}
+                      </Text>
+                      <View style={styles.amountsContainer}>
+                        <View style={styles.amountRow}>
+                          <Text style={[styles.tooltipText, styles.incomeText]}>
+                            收:{" "}
+                          </Text>
+                          <Text style={[styles.tooltipText, styles.amountText]}>
+                            {cnCurrency(
+                              monthlySeries.data[selectedBarIndex].income
+                            )}
+                          </Text>
+                        </View>
+                        <View style={styles.amountRow}>
+                          <Text
+                            style={[styles.tooltipText, styles.expenseText]}>
+                            支:{" "}
+                          </Text>
+                          <Text style={[styles.tooltipText, styles.amountText]}>
+                            {cnCurrency(
+                              monthlySeries.data[selectedBarIndex].expense
+                            )}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                )}
+
                 <CartesianChart
+                  ref={chartRef}
                   data={monthlySeries.data}
                   xKey="month"
                   yKeys={["income", "expense"]}
                   domainPadding={{ left: 30, right: 30, top: 20 }}
+                  chartPressState={BarState}
                   axisOptions={{
                     font,
-                    tickCount: { y: 10, x: 6 }, // 控制刻度数量
+                    tickCount: { y: 10, x: 6 },
                     labelColor: "#86909c",
                   }}>
                   {({ points, chartBounds }) => (
-                    <BarGroup
-                      chartBounds={chartBounds}
-                      betweenGroupPadding={0.3}
-                      withinGroupPadding={0.1}>
-                      <BarGroup.Bar
-                        points={points.income}
-                        color="#6BCB77"
-                      />
-                      <BarGroup.Bar
-                        points={points.expense}
-                        color="#FF6B6B"
-                      />
-                    </BarGroup>
+                    <>
+                      <BarGroup
+                        chartBounds={chartBounds}
+                        betweenGroupPadding={0.3}
+                        withinGroupPadding={0.1}>
+                        <BarGroup.Bar
+                          points={points.income}
+                          color="#6BCB77"
+                        />
+                        <BarGroup.Bar
+                          points={points.expense}
+                          color="#FF6B6B"
+                        />
+                      </BarGroup>
+                    </>
                   )}
                 </CartesianChart>
               </View>
@@ -395,4 +485,52 @@ const styles = StyleSheet.create({
   },
   scrollBox: { marginBottom: 70 },
   centerBox: { flex: 1, justifyContent: "center", alignItems: "center" },
+
+  //
+  centeredTooltip: {
+    position: "absolute",
+    top: 8,
+    alignSelf: "center",
+    zIndex: 100,
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
+    padding: 6,
+    borderRadius: 5,
+    borderColor: "rgba(255, 255, 255, 0.7)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    maxWidth: 180, // 设置最大宽度
+  },
+  tooltipContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  tooltipTitle: {
+    fontSize: 13,
+    marginRight: 6,
+  },
+  amountsContainer: {
+    flexDirection: "column",
+  },
+  amountRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+  },
+  tooltipText: {
+    fontSize: 12,
+    color: "#333",
+  },
+  incomeText: {
+    color: "#6BCB77",
+  },
+  expenseText: {
+    color: "#FF6B6B",
+  },
+  amountText: {
+    color: "#333",
+    minWidth: 60, // 确保金额有足够空间显示
+  },
 });
