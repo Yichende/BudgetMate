@@ -126,7 +126,7 @@ export default function BillsOfDatePage() {
         <Appbar.BackAction
           onPress={() => {
             if (router.canGoBack()) router.back();
-            else router.replace("/"); // 兜底返回首页
+            else router.replace("/home"); // 兜底返回首页
           }}
         />
         <Appbar.Content title={dayjs(date).format("YYYY年MM月DD日")} />

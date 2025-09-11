@@ -11,8 +11,6 @@ import {
   useTxStore,
 } from "../src/store/transactionStore";
 
-const CATEGORIES: TxCategory[] = ["饮食", "交通", "娱乐", "购物", "其他"];
-
 export default function AddBill() {
   const params = useLocalSearchParams<{ date?: string; billId?: string }>();
   const add = useTxStore((s) => s.add);
@@ -29,7 +27,7 @@ export default function AddBill() {
     editing?.type ?? "expense"
   );
   const [category, setCategory] = useState<TxCategory>(
-    editing?.category ?? "饮食"
+    editing?.category ?? "餐饮"
   );
   const [date, setDate] = useState<Date>(
     editing
@@ -84,12 +82,6 @@ export default function AddBill() {
         style={{ marginBottom: 6 }}>
         类型
       </Text>
-      <SegmentedButtons
-        value={category}
-        onValueChange={(v) => setCategory(v as TxCategory)}
-        buttons={CATEGORIES.map((c) => ({ value: c, label: c }))}
-        style={styles.segment}
-      />
 
       <Button
         mode="outlined"

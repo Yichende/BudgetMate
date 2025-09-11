@@ -8,6 +8,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { darkTheme, lightTheme } from '../src/constants/theme';
 import { useUIStore } from '../src/store/uiStore';
 
+import BottomNav from "./components/BottomNav";
+
 export default function RootLayout() {
   const [fontsLoaded, setFontsLoaded] = useState(false);
   const darkMode = useUIStore((state) => state.darkMode);
@@ -32,6 +34,7 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <PaperProvider theme={theme}>
           <Stack screenOptions={{ headerShown: false }} />
+          <BottomNav />
         </PaperProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

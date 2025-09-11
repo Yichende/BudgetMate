@@ -4,7 +4,7 @@ import { router } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Dimensions, ScrollView, StyleSheet, View } from "react-native";
 import { Calendar, LocaleConfig } from "react-native-calendars";
-import { Appbar, Button, Card, Text } from "react-native-paper";
+import { Button, Card, Text } from "react-native-paper";
 import type { SharedValue } from "react-native-reanimated";
 import Animated, {
   FadeInUp,
@@ -449,22 +449,6 @@ export default function Home() {
           </Card.Content>
         </Card>
       </ScrollView>
-
-      {/* 底部导航 */}
-      <Appbar style={styles.bottom}>
-        <Appbar.Action
-          icon="chart-bar"
-          onPress={() => {}}
-        />
-        <Appbar.Action
-          icon="file-document"
-          onPress={() => router.push("/bills-details")}
-        />
-        <Appbar.Action
-          icon="cog"
-          onPress={() => router.push("/settings")}
-        />
-      </Appbar>
     </View>
   );
 }
@@ -476,17 +460,10 @@ const styles = StyleSheet.create({
   toggleBtn: { marginHorizontal: 5 },
   chartCard: { margin: 10 },
   empty: { textAlign: "center", color: "#888", marginVertical: 20 },
-  bottom: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "#F5D76E",
-  },
   scrollBox: { marginBottom: 70 },
   centerBox: { flex: 1, justifyContent: "center", alignItems: "center" },
 
-  //
+  // 6月总计柱状图
   centeredTooltip: {
     position: "absolute",
     top: 8,
