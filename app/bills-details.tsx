@@ -1,14 +1,49 @@
-// app/bills-details.tsx
 import dayjs from "dayjs";
 import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
-import { FlatList, ListRenderItemInfo, RefreshControl, StyleSheet, TouchableOpacity, View } from "react-native";
-import { Appbar, Card, Chip, Divider, List, Text } from "react-native-paper";
-import { Transaction, useTxStore } from "../src/store/transactionStore";
+import {
+  FlatList,
+  ListRenderItemInfo,
+  RefreshControl,
+  StyleSheet,
+  View,
+} from "react-native";
+import {
+  Appbar,
+  Button,
+  Card,
+  Divider,
+  List,
+  Modal,
+  Portal,
+  Text,
+} from "react-native-paper";
+import {
+  Transaction,
+  TxCategory,
+  useTxStore,
+} from "../src/store/transactionStore";
+import AnimatedChip from "./components/AnimatedChip";
+import SelectedCategoriesDisplay from "./components/SelectedCategoriesDisplay";
 
 const PAGE_SIZE = 7; // 每页加载多少天
 
 type DaySection = { date: string; items: Transaction[] };
+
+type BillItemProps = {
+  item: Transaction;
+};
+
+// 分类图标映射
+const categoryIcons: Record<TxCategory, string> = {
+  转账: "swap-horizontal",
+  购物: "cart",
+  娱乐: "gamepad-variant",
+  交通: "bus",
+  生活缴费: "flash",
+  餐饮: "silverware-fork-knife",
+  其他: "dots-horizontal",
+};
 
 export default function BillsDetailsPage() {
   const router = useRouter();
@@ -17,18 +52,24 @@ export default function BillsDetailsPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
   const [pageCount, setPageCount] = useState(1);
-  const [filter, setFilter] = useState<"all" | "income" | "expense">("all");
 
   const currentYM = dayjs().format("YYYY-MM");
 
-  // 筛选本月账单 + 类型
+  // 筛选 Modal
+  const [selectedCategories, setSelectedCategories] = useState<TxCategory[]>(
+    []
+  );
+  const [modalVisible, setModalVisible] = useState(false);
+
+  // 筛选本月账单 + 分类
   const monthBills = useMemo(() => {
     return items.filter(
       (t) =>
         t.date.startsWith(currentYM) &&
-        (filter === "all" ? true : t.type === filter)
+        (selectedCategories.length === 0 ||
+          selectedCategories.includes(t.category as TxCategory))
     );
-  }, [items, currentYM, filter]);
+  }, [items, currentYM, selectedCategories]);
 
   // 月度汇总
   const monthlySummary = useMemo(() => {
@@ -62,56 +103,63 @@ export default function BillsDetailsPage() {
 
   const hasMore = pagedSections.length < allSections.length;
 
-  const toggleExpand = useCallback((date: string) => {
-    setExpandedDays((prev) => {
-      const copy = new Set(prev);
-      if (copy.has(date)) copy.delete(date);
-      else copy.add(date);
-      return copy;
-    });
-  }, []);
-
   const renderDayCard = useCallback(
     ({ item }: ListRenderItemInfo<DaySection>) => {
       const { date, items: bills } = item;
-      const dayExpense = bills.filter((t) => t.type === "expense").reduce((a, t) => a + t.amount, 0);
-      const dayIncome = bills.filter((t) => t.type === "income").reduce((a, t) => a + t.amount, 0);
-      const expanded = expandedDays.has(date);
+      const dayExpense = bills
+        .filter((t) => t.type === "expense")
+        .reduce((a, t) => a + t.amount, 0);
+      const dayIncome = bills
+        .filter((t) => t.type === "income")
+        .reduce((a, t) => a + t.amount, 0);
 
       return (
         <Card style={styles.card}>
-          <TouchableOpacity onPress={() => toggleExpand(date)}>
-            <Card.Title
-              title={`${dayjs(date).format("M月D日")} ${dayjs(date).format("dddd")}`}
-              subtitle={`支出: ¥${dayExpense.toFixed(2)}  收入: ¥${dayIncome.toFixed(2)}  共 ${bills.length} 条`}
-            />
-          </TouchableOpacity>
+          <Card.Title
+            title={`${dayjs(date).format("M月D日")} ${dayjs(date).format(
+              "dddd"
+            )}`}
+            subtitle={`支出: ¥${dayExpense.toFixed(
+              2
+            )}  收入: ¥${dayIncome.toFixed(2)}  共 ${bills.length} 条`}
+          />
           <Divider />
-          {expanded && (
-            <FlatList
-              data={bills}
-              keyExtractor={(t) => String(t.id)}
-              renderItem={({ item: t }) => (
+
+          <FlatList
+            data={bills}
+            keyExtractor={(t) => String(t.id)}
+            renderItem={({ item: t }: BillItemProps) => {
+              const amountText =
+                (t.type === "income" ? "+" : "-") + t.amount.toFixed(2);
+              const amountColor = t.type === "income" ? "#4CAF50" : "#F44336";
+              const timeStr = dayjs(t.date).format("HH:mm");
+
+              return (
                 <List.Item
                   title={`${t.category} ¥${t.amount.toFixed(2)}`}
-                  description={t.note ?? ""}
+                  description={`${timeStr}  ${t.note ?? ""}`}
                   onPress={() => router.push(`/bills/${t.date}?id=${t.id}`)}
                   left={(props) => (
                     <List.Icon
                       {...props}
-                      icon="dots-horizontal"
+                      icon={categoryIcons[t.category]}
                       color={t.type === "income" ? "#4CAF50" : "#F44336"}
                     />
                   )}
+                  right={() => (
+                    <Text style={{ color: amountColor, fontWeight: "bold" }}>
+                      {amountText}
+                    </Text>
+                  )}
                 />
-              )}
-              scrollEnabled={false} // 内部FlatList禁止滚动
-            />
-          )}
+              );
+            }}
+            scrollEnabled={false} // 内部FlatList禁止滚动
+          />
         </Card>
       );
     },
-    [expandedDays, toggleExpand, router]
+    [expandedDays, router]
   );
 
   const onRefresh = useCallback(async () => {
@@ -133,20 +181,42 @@ export default function BillsDetailsPage() {
     <View style={styles.container}>
       <Appbar.Header>
         <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content title="账单明细" />
+        <Appbar.Content
+          titleStyle={styles.appbarTitle}
+          style={styles.appbarContent}
+          title="账单明细"
+        />
       </Appbar.Header>
 
       {/* 筛选 + 月汇总 */}
       <View style={styles.header}>
         <View style={styles.filterRow}>
-          <Chip selected={filter === "all"} onPress={() => setFilter("all")}>
-            全部
-          </Chip>
+          <Button
+            mode="text"
+            icon={
+              selectedCategories.length === 0 ? "view-list" : undefined // 多选时在文字里渲染图标
+            }
+            onPress={() => setModalVisible(true)}
+            textColor="#7A46A8"
+            buttonColor="#F7E8FF">
+            <SelectedCategoriesDisplay
+              selectedCategories={selectedCategories}
+              categoryIcons={categoryIcons}
+            />
+          </Button>
         </View>
         <View style={styles.summaryRow}>
-          <Text variant="titleMedium">{dayjs(currentYM).format("YYYY年MM月")}</Text>
-          <Text style={{ marginLeft: "auto", color: "#F44336" }}>支出: ¥{monthlySummary.expense.toFixed(2)}</Text>
-          <Text style={{ marginLeft: 12, color: "#4CAF50" }}>收入: ¥{monthlySummary.income.toFixed(2)}</Text>
+          <Text
+            variant="titleMedium"
+            style={{ color: "#FFFEE8" }}>
+            {dayjs(currentYM).format("YYYY年MM月")}
+          </Text>
+          <Text style={{ marginLeft: "auto", color: "#FDF9CF" }}>
+            总支出: ¥{monthlySummary.expense.toFixed(2)}
+          </Text>
+          <Text style={{ marginLeft: 12, color: "#FDF9CF" }}>
+            总收入: ¥{monthlySummary.income.toFixed(2)}
+          </Text>
         </View>
       </View>
 
@@ -161,37 +231,132 @@ export default function BillsDetailsPage() {
         windowSize={5}
         onEndReached={loadMore}
         onEndReachedThreshold={0.6}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          />
+        }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text variant="titleMedium" style={{ color: "#888" }}>
+            <Text
+              variant="titleMedium"
+              style={{ color: "#888" }}>
               暂无账单
             </Text>
           </View>
         }
       />
 
-      {/* 页脚加载更多提示 */}
-      <View style={styles.footer}>
-        {hasMore ? (
-          <TouchableOpacity onPress={loadMore} style={styles.loadMore}>
-            <Text>加载更多天数</Text>
-          </TouchableOpacity>
-        ) : (
-          <Text style={{ color: "#888" }}>已加载全部可用日期</Text>
-        )}
-      </View>
+      {/* 筛选 Modal */}
+      <Portal>
+        <Modal
+          visible={modalVisible}
+          onDismiss={() => setModalVisible(false)}
+          contentContainerStyle={styles.bottomSheet}>
+          <Text style={styles.modalTitle}>选择分类</Text>
+          <View style={styles.chipContainer}>
+            {/* 全部选项 */}
+            <AnimatedChip
+              icon="view-list"
+              selected={selectedCategories.length === 0}
+              selectedColor="#fff"
+              style={[
+                styles.chip,
+                selectedCategories.length === 0 && styles.chipSelected,
+              ]}
+              onPress={() => {
+                setSelectedCategories([]); // 空数组代表全部
+                setModalVisible(false);
+              }}>
+              全部
+            </AnimatedChip>
+
+            {/* 分类选项 */}
+            {(Object.keys(categoryIcons) as TxCategory[]).map((cat) => {
+              const isSelected = selectedCategories.includes(cat);
+              return (
+                <AnimatedChip
+                  key={cat}
+                  icon={categoryIcons[cat]}
+                  selected={isSelected}
+                  selectedColor="#fff"
+                  style={[styles.chip, isSelected && styles.chipSelected]}
+                  onPress={() => {
+                    let newSelected = [...selectedCategories];
+                    if (isSelected) {
+                      newSelected = newSelected.filter((c) => c !== cat);
+                    } else {
+                      newSelected.push(cat);
+                    }
+                    setSelectedCategories(newSelected);
+                  }}>
+                  {cat}
+                </AnimatedChip>
+              );
+            })}
+          </View>
+        </Modal>
+      </Portal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFF" },
-  header: { padding: 12, backgroundColor: "#FFF8E1" },
+  container: { flex: 1, backgroundColor: "#FFFBEA" },
+  appbarTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  appbarContent: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
+  header: { padding: 12, backgroundColor: "#F5D76E" },
   filterRow: { flexDirection: "row", marginBottom: 8 },
   summaryRow: { flexDirection: "row", alignItems: "center" },
-  card: { marginHorizontal: 8, marginTop: 10, borderRadius: 12, overflow: "hidden" },
+  filterBtnLabel: {
+    fontSize: 14,
+    borderRadius: 1,
+    fontWeight: "bold",
+  },
+  card: {
+    marginHorizontal: 8,
+    marginTop: 10,
+    borderRadius: 12,
+    overflow: "hidden",
+  },
   empty: { padding: 24, alignItems: "center" },
-  footer: { position: "absolute", left: 0, right: 0, bottom: 60, alignItems: "center" },
-  loadMore: { paddingVertical: 6, paddingHorizontal: 12, backgroundColor: "#eee", borderRadius: 20 },
+  modal: {
+    backgroundColor: "white",
+    margin: 20,
+    padding: 20,
+    borderRadius: 12,
+  },
+  modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12 },
+  bottomSheet: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "white",
+    padding: 20,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  chipContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  chip: {
+    margin: 4,
+    backgroundColor: "#f2f2f2",
+  },
+  chipSelected: {
+    backgroundColor: "#7A46A8", // 选中背景
+  },
 });

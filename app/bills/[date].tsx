@@ -40,26 +40,41 @@ const categoryIcons: Record<TxCategory, string> = {
 
 type BillItemProps = {
   item: Transaction;
+};
+
+type HiddenItemProps = {
+  item: Transaction;
   onEdit: (tx: Transaction) => void;
   onDelete: (id: string) => void;
 };
 
-const BillItem = React.memo(({ item, onEdit, onDelete }: BillItemProps) => (
-  <List.Item
-    style={styles.billItem}
-    title={`${item.category}  ¥${item.amount}`}
-    description={item.note || ""}
-    left={(props) => (
-      <List.Icon
-        {...props}
-        icon={categoryIcons[item.category]}
-        color={item.type === "income" ? "#4CAF50" : "#F44336"}
-      />
-    )}
-  />
-));
+const BillItem = React.memo(({ item }: BillItemProps) => {
+  const amountText =
+    (item.type === "income" ? "+" : "-") + item.amount.toFixed(2);
+  const amountColor = item.type === "income" ? "#4CAF50" : "#F44336";
+  const timeStr = dayjs(item.date).format("HH:mm");
+  return (
+    <List.Item
+      style={styles.billItem}
+      title={`${item.category}`}
+      description={`${timeStr}  ${item.note ?? ""}`}
+      left={(props) => (
+        <List.Icon
+          {...props}
+          icon={categoryIcons[item.category]}
+          color={item.type === "income" ? "#4CAF50" : "#F44336"}
+        />
+      )}
+      right={() => (
+        <Text style={{ color: amountColor, fontWeight: "bold" }}>
+          {amountText}
+        </Text>
+      )}
+    />
+  );
+});
 
-const HiddenItem = React.memo(({ item, onEdit, onDelete }: BillItemProps) => (
+const HiddenItem = React.memo(({ item, onEdit, onDelete }: HiddenItemProps) => (
   <View style={styles.hiddenRow}>
     <IconButton
       icon="pencil"
@@ -135,7 +150,9 @@ export default function BillsOfDatePage() {
       {/* 内容 */}
       {bills.length === 0 ? (
         <View style={styles.empty}>
-          <Text variant="titleMedium" style={{ color: "#888" }}>
+          <Text
+            variant="titleMedium"
+            style={{ color: "#888" }}>
             暂无账单
           </Text>
         </View>
@@ -143,11 +160,13 @@ export default function BillsOfDatePage() {
         <SwipeListView
           data={bills}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <BillItem item={item} onEdit={openEdit} onDelete={setConfirmDeleteId} />
-          )}
+          renderItem={({ item }) => <BillItem item={item} />}
           renderHiddenItem={({ item }) => (
-            <HiddenItem item={item} onEdit={openEdit} onDelete={setConfirmDeleteId} />
+            <HiddenItem
+              item={item}
+              onEdit={openEdit}
+              onDelete={setConfirmDeleteId}
+            />
           )}
           rightOpenValue={-125}
           disableRightSwipe
@@ -162,28 +181,39 @@ export default function BillsOfDatePage() {
         <Dialog
           visible={!!editing}
           onDismiss={() => setEditing(null)}
-          style={{ borderRadius: 12 }}
-        >
-          <Dialog.Title style={{color: '#8A0993', fontWeight: 700 }}>编辑账单</Dialog.Title>
+          style={{ borderRadius: 12 }}>
+          <Dialog.Title style={{ color: "#8A0993", fontWeight: 700 }}>
+            编辑账单
+          </Dialog.Title>
           <Dialog.ScrollArea>
             <KeyboardAvoidingView
-              behavior={Platform.OS === "ios" ? "padding" : undefined}
-            >
+              behavior={Platform.OS === "ios" ? "padding" : undefined}>
               <ScrollView style={{ maxHeight: 400 }}>
                 <Dialog.Content>
-                  <Text variant="titleMedium" style={styles.dialogTitle}>
+                  <Text
+                    variant="titleMedium"
+                    style={styles.dialogTitle}>
                     收入 / 支出
                   </Text>
                   <Divider />
                   <RadioButton.Group
-                    onValueChange={(v) => setEditType(v as "income" | "expense")}
-                    value={editType}
-                  >
-                    <RadioButton.Item label="支出" value="expense" />
-                    <RadioButton.Item label="收入" value="income" />
+                    onValueChange={(v) =>
+                      setEditType(v as "income" | "expense")
+                    }
+                    value={editType}>
+                    <RadioButton.Item
+                      label="支出"
+                      value="expense"
+                    />
+                    <RadioButton.Item
+                      label="收入"
+                      value="income"
+                    />
                   </RadioButton.Group>
 
-                  <Text variant="titleMedium" style={styles.dialogTitle}>
+                  <Text
+                    variant="titleMedium"
+                    style={styles.dialogTitle}>
                     金额及备注
                   </Text>
                   <Divider />
@@ -200,14 +230,15 @@ export default function BillsOfDatePage() {
                     style={{ marginTop: 10 }}
                   />
 
-                  <Text variant="titleMedium" style={styles.dialogTitle}>
+                  <Text
+                    variant="titleMedium"
+                    style={styles.dialogTitle}>
                     分类
                   </Text>
                   <Divider />
                   <RadioButton.Group
                     onValueChange={(v) => setEditCategory(v as TxCategory)}
-                    value={editCategory}
-                  >
+                    value={editCategory}>
                     {Object.keys(categoryIcons).map((cat) => (
                       <RadioButton.Item
                         key={cat}
@@ -230,8 +261,7 @@ export default function BillsOfDatePage() {
         {/* 删除确认 Modal */}
         <Dialog
           visible={!!confirmDeleteId}
-          onDismiss={() => setConfirmDeleteId(null)}
-        >
+          onDismiss={() => setConfirmDeleteId(null)}>
           <Dialog.Title>确认删除</Dialog.Title>
           <Dialog.Content>
             <Text>确定要删除这条账单吗？</Text>
@@ -244,8 +274,7 @@ export default function BillsOfDatePage() {
                   await remove(confirmDeleteId);
                   setConfirmDeleteId(null);
                 }
-              }}
-            >
+              }}>
               删除
             </Button>
           </Dialog.Actions>
