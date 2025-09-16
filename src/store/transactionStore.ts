@@ -23,7 +23,7 @@ export type Transaction = {
   category: TxCategory;
   amount: number;
   note?: string;
-  date: string; // YYYY-MM-DD
+  date: string; // YYYY-MM-DD HH:mm:ss
   synced?: boolean;
 };
 
@@ -53,7 +53,10 @@ type TransactionState = {
   syncPending: () => Promise<void>;
   byDate: (date: string) => Transaction[];
   summaryOfMonth: (ym: string) => { income: number; expense: number };
-  typeBreakdownOfMonth: (ym: string, type: TxType) => Record<TxCategory, number>;
+  typeBreakdownOfMonth: (
+    ym: string,
+    type: TxType
+  ) => Record<TxCategory, number>;
   monthlySummarySeries: () => {
     data: { month: string; income: number; expense: number }[];
   };
@@ -100,7 +103,15 @@ export const useTxStore = create<TransactionState>((set, get) => {
           for (const b of bills) {
             db.runSync(
               "INSERT INTO transactions (id, type, category, amount, note, date, synced) VALUES (?, ?, ?, ?, ?, ?, ?)",
-              [b.id, b.type, b.category, b.amount, b.note ?? null, b.date, b.synced ? 1 : 0]
+              [
+                b.id,
+                b.type,
+                b.category,
+                b.amount,
+                b.note ?? null,
+                b.date,
+                b.synced ? 1 : 0,
+              ]
             );
           }
           db.execSync("COMMIT");
@@ -108,7 +119,6 @@ export const useTxStore = create<TransactionState>((set, get) => {
           db.execSync("ROLLBACK");
           throw e;
         }
-
       } catch (err) {
         console.error("❌ load bills error, fallback to local", err);
         const local: Transaction[] =
@@ -125,12 +135,20 @@ export const useTxStore = create<TransactionState>((set, get) => {
 
       db.runSync(
         "INSERT INTO transactions (id, type, category, amount, note, date, synced) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        [newTx.id, newTx.type, newTx.category, newTx.amount, newTx.note ?? null, newTx.date, 0]
+        [
+          newTx.id,
+          newTx.type,
+          newTx.category,
+          newTx.amount,
+          newTx.note ?? null,
+          newTx.date,
+          0,
+        ]
       );
 
-      get().syncPending().catch((e) =>
-        console.warn("syncPending failed after add:", e)
-      );
+      get()
+        .syncPending()
+        .catch((e) => console.warn("syncPending failed after add:", e));
     },
 
     update: async (id, patch) => {
@@ -148,12 +166,19 @@ export const useTxStore = create<TransactionState>((set, get) => {
         console.log("更新账单失败：", err);
       }
 
-
       const tx = items.find((t) => t.id === id);
       if (tx) {
         db.runSync(
           "UPDATE transactions SET type=?, category=?, amount=?, note=?, date=?, synced=? WHERE id=?",
-          [tx.type, tx.category, tx.amount, tx.note ?? null, tx.date, tx.synced ? 1 : 0, tx.id]
+          [
+            tx.type,
+            tx.category,
+            tx.amount,
+            tx.note ?? null,
+            tx.date,
+            tx.synced ? 1 : 0,
+            tx.id,
+          ]
         );
       }
     },
@@ -194,10 +219,16 @@ export const useTxStore = create<TransactionState>((set, get) => {
                 date: tx.date,
                 note: tx.note,
               },
-              { headers: token ? { Authorization: "Bearer " + token } : undefined }
+              {
+                headers: token
+                  ? { Authorization: "Bearer " + token }
+                  : undefined,
+              }
             );
             if (res.status === 200 || res.status === 201) {
-              db.runSync("UPDATE transactions SET synced=1 WHERE id=?", [tx.id]);
+              db.runSync("UPDATE transactions SET synced=1 WHERE id=?", [
+                tx.id,
+              ]);
               set({
                 items: get().items.map((t) =>
                   t.id === tx.id ? { ...t, synced: true } : t
@@ -213,10 +244,13 @@ export const useTxStore = create<TransactionState>((set, get) => {
       }
     },
 
-    byDate: (date) => get().items.filter((t) => t.date === date),
+    byDate: (date) =>
+      get().items.filter((t) => dayjs(t.date).format("YYYY-MM-DD") === date),
 
     summaryOfMonth: (ym) => {
-      const items = get().items.filter((t) => t.date.startsWith(ym));
+      const items = get().items.filter(
+        (t) => dayjs(t.date).format("YYYY-MM") === ym
+      );
       return items.reduce(
         (acc, t) => {
           if (t.type === "income") acc.income += t.amount;
@@ -238,7 +272,7 @@ export const useTxStore = create<TransactionState>((set, get) => {
         其他: 0,
       };
       get()
-        .items.filter((t) => t.type === type && t.date.startsWith(ym))
+        .items.filter((t) => t.type === type && dayjs(t.date).format("YYYY-MM") === ym)
         .forEach((t) => {
           acc[t.category] += t.amount;
         });

@@ -159,7 +159,7 @@ export default function BillsDetailsPage() {
         </Card>
       );
     },
-    [expandedDays, router]
+    [router]
   );
 
   const onRefresh = useCallback(async () => {
@@ -180,10 +180,8 @@ export default function BillsDetailsPage() {
   return (
     <View style={styles.container}>
       <Appbar.Header>
-        <Appbar.BackAction onPress={() => router.back()} />
         <Appbar.Content
           titleStyle={styles.appbarTitle}
-          style={styles.appbarContent}
           title="账单明细"
         />
       </Appbar.Header>
@@ -260,7 +258,8 @@ export default function BillsDetailsPage() {
             <AnimatedChip
               icon="view-list"
               selected={selectedCategories.length === 0}
-              selectedColor="#fff"
+              selectedColor="#7A46A8"
+              IconColor="#7A46A8"
               style={[
                 styles.chip,
                 selectedCategories.length === 0 && styles.chipSelected,
@@ -280,7 +279,8 @@ export default function BillsDetailsPage() {
                   key={cat}
                   icon={categoryIcons[cat]}
                   selected={isSelected}
-                  selectedColor="#fff"
+                  selectedColor="#7A46A8"
+                  IconColor="#7A46A8"
                   style={[styles.chip, isSelected && styles.chipSelected]}
                   onPress={() => {
                     let newSelected = [...selectedCategories];
@@ -308,12 +308,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     textAlign: "center",
-  },
-  appbarContent: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    alignItems: "center",
+    
   },
   header: { padding: 12, backgroundColor: "#F5D76E" },
   filterRow: { flexDirection: "row", marginBottom: 8 },
@@ -357,6 +352,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#f2f2f2",
   },
   chipSelected: {
-    backgroundColor: "#7A46A8", // 选中背景
+    backgroundColor: "#F7E8FF", // 选中背景7A46A8  
   },
 });

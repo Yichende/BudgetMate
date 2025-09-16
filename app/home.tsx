@@ -114,7 +114,7 @@ export default function Home() {
     const dataPoints = dates.map((d) => {
       const dayStr = d.format("YYYY-MM-DD");
       const dayItems = items.filter(
-        (t) => t.date === dayStr && t.type === showType
+        (t) => dayjs(t.date).format("YYYY-MM-DD") === dayStr && t.type === showType
       );
       return { x: dayStr, y: dayItems.reduce((sum, t) => sum + t.amount, 0) };
     });
@@ -135,9 +135,10 @@ export default function Home() {
       [selected]: { selected: true, selectedColor: "#F5D76E" },
     };
     items.forEach((t) => {
-      if (t.date.startsWith(ym)) {
-        mark[t.date] = mark[t.date] || { marked: true, dotColor: "#F5D76E" };
-        mark[t.date].marked = true;
+      const d = dayjs(t.date).format("YYYY-MM-DD");
+      if (d.startsWith(ym)) {
+        mark[d] = mark[d] || { marked: true, dotColor: "#F5D76E" };
+        mark[d].marked = true;
       }
     });
     return mark;

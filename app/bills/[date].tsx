@@ -98,7 +98,9 @@ export default function BillsOfDatePage() {
   const { date } = useLocalSearchParams<{ date: string }>();
   const items = useTxStore((s) => s.items);
   const bills = useMemo(
-    () => items.filter((t) => t.date === date),
+    () => items.filter(
+      (t) => dayjs(t.date).format("YYYY-MM-DD") === dayjs(date).format("YYYY-MM-DD")
+    ),
     [items, date]
   );
 

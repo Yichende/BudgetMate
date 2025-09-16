@@ -1,6 +1,7 @@
 import React, { useRef } from "react";
 import { Animated, Pressable } from "react-native";
-import { Chip } from "react-native-paper";
+import { Chip, Icon } from "react-native-paper";
+
 
 interface AnimatedChipProps {
   selected?: boolean;
@@ -9,6 +10,7 @@ interface AnimatedChipProps {
   onPress?: () => void;
   style?: any;
   selectedColor?: string;
+  IconColor?: string;
 }
 
 const AnimatedChip: React.FC<AnimatedChipProps> = ({
@@ -18,6 +20,7 @@ const AnimatedChip: React.FC<AnimatedChipProps> = ({
   onPress,
   style,
   selectedColor,
+  IconColor,
 }) => {
   const scale = useRef(new Animated.Value(1)).current;
 
@@ -44,10 +47,18 @@ const AnimatedChip: React.FC<AnimatedChipProps> = ({
     <Pressable onPress={handlePress}>
       <Animated.View style={{ transform: [{ scale }] }}>
         <Chip
-          icon={icon}
           selected={selected}
           selectedColor={selectedColor}
           style={style}
+          icon={() =>
+            icon ? (
+              <Icon
+                source={icon}
+                size={18}
+                color={IconColor}
+              />
+            ) : null
+          }
         >
           {children}
         </Chip>
