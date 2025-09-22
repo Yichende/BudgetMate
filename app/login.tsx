@@ -16,7 +16,7 @@ export default function LoginScreen() {
     try {
       if (!email || !password) return;
       const ok = await login(email, password);
-      if (ok) router.replace("/");
+      if (ok) router.replace("/home");
     } catch (err) {
       console.log(err);
     }

@@ -13,10 +13,11 @@ import {
   Button,
   Card,
   Divider,
+  FAB,
   List,
   Modal,
   Portal,
-  Text,
+  Text
 } from "react-native-paper";
 import {
   Transaction,
@@ -24,7 +25,9 @@ import {
   useTxStore,
 } from "../src/store/transactionStore";
 import AnimatedChip from "./components/AnimatedChip";
+import BillAddModal from "./components/BillAddModal";
 import SelectedCategoriesDisplay from "./components/SelectedCategoriesDisplay";
+import YearMonthPicker from "./components/YearMonthPicker";
 
 const PAGE_SIZE = 7; // 每页加载多少天
 
@@ -50,16 +53,17 @@ export default function BillsDetailsPage() {
   const items = useTxStore((s) => s.items);
   const load = useTxStore((s) => s.load);
   const [refreshing, setRefreshing] = useState(false);
-  const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
   const [pageCount, setPageCount] = useState(1);
 
-  const currentYM = dayjs().format("YYYY-MM");
+  // 当前年月
+  const [currentYM, setCurrentYM] = useState(dayjs().format("YYYY-MM"));
+  const [openYMPicker, setOpenYMPicker] = useState(false);
 
   // 筛选 Modal
-  const [selectedCategories, setSelectedCategories] = useState<TxCategory[]>(
-    []
-  );
+  const [selectedCategories, setSelectedCategories] = useState<TxCategory[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
+  // 添加账单 Modal
+  const [showAddModal, setShowAddModal] = useState(false);
 
   // 筛选本月账单 + 分类
   const monthBills = useMemo(() => {
@@ -204,11 +208,12 @@ export default function BillsDetailsPage() {
           </Button>
         </View>
         <View style={styles.summaryRow}>
-          <Text
-            variant="titleMedium"
-            style={{ color: "#FFFEE8" }}>
+          <Button
+            mode="text"
+            textColor="#FFFEE8"
+            onPress={() => setOpenYMPicker(true)}>
             {dayjs(currentYM).format("YYYY年MM月")}
-          </Text>
+          </Button>
           <Text style={{ marginLeft: "auto", color: "#FDF9CF" }}>
             总支出: ¥{monthlySummary.expense.toFixed(2)}
           </Text>
@@ -224,7 +229,7 @@ export default function BillsDetailsPage() {
         data={pagedSections}
         renderItem={renderDayCard}
         keyExtractor={(s) => s.date}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: 200 }}
         initialNumToRender={PAGE_SIZE}
         windowSize={5}
         onEndReached={loadMore}
@@ -298,6 +303,26 @@ export default function BillsDetailsPage() {
           </View>
         </Modal>
       </Portal>
+      <YearMonthPicker
+        visible={openYMPicker}
+        initialYM={currentYM}
+        onClose={() => setOpenYMPicker(false)}
+        onConfirm={(ym) => setCurrentYM(ym)}
+      />
+      <FAB
+        style={styles.fab}
+        icon="pencil"
+        onPress={() => setShowAddModal(true)}
+      />
+      <BillAddModal
+        visible={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSubmit={(data) => {
+          console.log("提交数据:", data);
+          // TODO: 保存到 SQLite + Zustand
+          setShowAddModal(false);
+        }}
+      />
     </View>
   );
 }
@@ -308,7 +333,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     textAlign: "center",
-    
   },
   header: { padding: 12, backgroundColor: "#F5D76E" },
   filterRow: { flexDirection: "row", marginBottom: 8 },
@@ -352,6 +376,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#f2f2f2",
   },
   chipSelected: {
-    backgroundColor: "#F7E8FF", // 选中背景7A46A8  
+    backgroundColor: "#F7E8FF", // 选中背景7A46A8
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  fab: {
+    position: "absolute",
+    right: 16,
+    bottom: 100,
+    backgroundColor: "#F5D76E",
   },
 });
