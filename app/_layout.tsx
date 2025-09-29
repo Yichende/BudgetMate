@@ -1,5 +1,5 @@
 import * as Font from "expo-font";
-import { Stack } from 'expo-router';
+import { Stack, useSegments } from 'expo-router';
 import React, { useEffect, useState } from "react";
 import 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -14,6 +14,9 @@ export default function RootLayout() {
   const [fontsLoaded, setFontsLoaded] = useState(false);
   const darkMode = useUIStore((state) => state.darkMode);
   const theme = darkMode ? darkTheme : lightTheme;
+
+  const segments = useSegments(); // 获取当前路径
+  const isLogin = segments[0] === "login"; // 判断是不是 login 页面
   
 
   useEffect(() => {
@@ -34,7 +37,7 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <PaperProvider theme={theme}>
           <Stack screenOptions={{ headerShown: false }} />
-          <BottomNav />
+          {!isLogin && <BottomNav />} 
         </PaperProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

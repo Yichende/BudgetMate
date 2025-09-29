@@ -1,5 +1,7 @@
 import axios from "axios";
 import Constants from "expo-constants";
+import { useAuthStore } from "../store/authStore";
+
 
 let authToken: string | null = null;
 
@@ -39,5 +41,23 @@ API.interceptors.request.use((config) => {
   }
   return config;
 });
+
+API.interceptors.response.use(
+  (resp) => resp,
+  async (error) => {
+    const status = error?.response?.status;
+    
+    if (status === 401) {
+      // 全局统一处理
+      try {
+        const logout = useAuthStore.getState().logout;
+        await logout();
+      } catch (e) {
+        console.log('Error message: ', e);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default API;

@@ -88,6 +88,7 @@ export const useTxStore = create<TransactionState>((set, get) => {
           }
         }
 
+
         const res = await API.get("/bill", {
           headers: { Authorization: "Bearer " + token },
         });
