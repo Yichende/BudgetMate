@@ -15,7 +15,37 @@ export type TxCategory =
   | "交通"
   | "生活缴费"
   | "餐饮"
+  | "教育"
+  | "运动"
+  | "旅行"
+  | "宠物"
+  | "医疗"
+  | "保险"
+  | "公益"
+  | "红包"
+  | "亲属"
+  | "酒店"
   | "其他";
+
+export const categoryIcons: Record<TxCategory, string> = {
+  转账: "swap-horizontal",
+  购物: "cart",
+  娱乐: "gamepad-variant",
+  交通: "bus",
+  生活缴费: "flash",
+  餐饮: "silverware-fork-knife",
+  教育: "school",
+  运动: "basketball",
+  旅行: "wallet-travel",
+  宠物: "paw",
+  医疗: "medical-bag",
+  保险: "account-lock",
+  公益: "hand-heart",
+  红包: "wallet-giftcard",
+  亲属: "account-group",
+  酒店: "bed-empty",
+  其他: "dots-horizontal",
+};
 
 export type Transaction = {
   id: string;
@@ -88,7 +118,6 @@ export const useTxStore = create<TransactionState>((set, get) => {
           }
         }
 
-
         const res = await API.get("/bill", {
           headers: { Authorization: "Bearer " + token },
         });
@@ -146,6 +175,36 @@ export const useTxStore = create<TransactionState>((set, get) => {
           0,
         ]
       );
+
+      try {
+        const token = await AsyncStorage.getItem("token");
+        const res = await API.post(
+          "/bill",
+          {
+            amount: newTx.amount,
+            type: newTx.type,
+            category: newTx.category,
+            date: newTx.date,
+            note: newTx.note,
+          },
+          {
+            headers: token ? { Authorization: "Bearer " + token } : undefined,
+          }
+        );
+
+        if (res.status === 200 || res.status === 201) {
+          // 更新 SQLite 同步状态
+          db.runSync("UPDATE transactions SET synced=1 WHERE id=?", [newTx.id]);
+          set({
+            items: get().items.map((t) =>
+              t.id === newTx.id ? { ...t, synced: true } : t
+            ),
+          });
+        }
+      } catch (err) {
+        console.warn("❌ add 时网络错误，先存本地，等待 syncPending", err);
+        // 保持 synced=0，等待后续 syncPending
+      }
 
       get()
         .syncPending()
@@ -270,10 +329,22 @@ export const useTxStore = create<TransactionState>((set, get) => {
         交通: 0,
         生活缴费: 0,
         餐饮: 0,
+        教育: 0,
+        运动: 0,
+        旅行: 0,
+        宠物: 0,
+        医疗: 0,
+        保险: 0,
+        公益: 0,
+        红包: 0,
+        亲属: 0,
+        酒店: 0,
         其他: 0,
       };
       get()
-        .items.filter((t) => t.type === type && dayjs(t.date).format("YYYY-MM") === ym)
+        .items.filter(
+          (t) => t.type === type && dayjs(t.date).format("YYYY-MM") === ym
+        )
         .forEach((t) => {
           acc[t.category] += t.amount;
         });

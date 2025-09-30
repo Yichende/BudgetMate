@@ -24,19 +24,9 @@ import { SwipeListView } from "react-native-swipe-list-view";
 import {
   Transaction,
   TxCategory,
+  categoryIcons,
   useTxStore,
 } from "../../src/store/transactionStore";
-
-// 分类图标映射
-const categoryIcons: Record<TxCategory, string> = {
-  转账: "swap-horizontal",
-  购物: "cart",
-  娱乐: "gamepad-variant",
-  交通: "bus",
-  生活缴费: "flash",
-  餐饮: "silverware-fork-knife",
-  其他: "dots-horizontal",
-};
 
 type BillItemProps = {
   item: Transaction;

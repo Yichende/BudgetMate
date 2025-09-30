@@ -1,15 +1,16 @@
+import { TxCategory, categoryIcons } from "@/src/store/transactionStore";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import dayjs from "dayjs";
 import React, { useState } from "react";
 import {
-  FlatList,
+  Dimensions, FlatList,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  View,
+  View
 } from "react-native";
 import {
   Button,
@@ -21,27 +22,6 @@ import {
   TextInput,
   TouchableRipple,
 } from "react-native-paper";
-
-// 分类类型
-type TxCategory =
-  | "转账"
-  | "购物"
-  | "娱乐"
-  | "交通"
-  | "生活缴费"
-  | "餐饮"
-  | "其他";
-
-// 分类图标映射
-const categoryIcons: Record<TxCategory, string> = {
-  转账: "swap-horizontal",
-  购物: "cart",
-  娱乐: "gamepad-variant",
-  交通: "bus",
-  生活缴费: "flash",
-  餐饮: "silverware-fork-knife",
-  其他: "dots-horizontal",
-};
 
 type BillAddModalProps = {
   visible: boolean;
@@ -68,14 +48,27 @@ export default function BillAddModal({
   const [remark, setRemark] = useState("");
   const [showRemarkInput, setShowRemarkInput] = useState(false);
 
+  // 分类选择大小适应
+  const screenWidth = Dimensions.get("window").width;
+  // 每行展示的列数
+  const numColumns = 5;
+  // 预留出 FlatList 的 padding/margin，总共算 32px
+  const horizontalPadding = 32;
+  // item 宽度 = (屏幕宽度 - 总间距) / 列数
+  const itemWidth = (screenWidth - horizontalPadding) / numColumns;
+
   const handleKeyPress = (val: string) => {
     if (val === "back") {
       setAmount((prev) => prev.slice(0, -1));
     } else if (val === "ok") {
       if (!amount || !selectedCategory) return;
+      const isToday = dayjs(date).isSame(dayjs(), "day");
+      const finalDate = isToday
+        ? dayjs().format("YYYY-MM-DD HH:mm:ss")
+        : dayjs(date).endOf("day").format("YYYY-MM-DD HH:mm:ss");
       onSubmit({
         type,
-        date: dayjs(date).format("YYYY-MM-DD"),
+        date: finalDate,
         amount,
         category: selectedCategory,
         remark,
@@ -161,12 +154,12 @@ export default function BillAddModal({
               <View style={{ flex: 1 }}>
                 <FlatList
                   data={Object.keys(categoryIcons) as TxCategory[]}
-                  numColumns={4}
+                  numColumns={numColumns}
                   keyExtractor={(item) => item}
                   renderItem={({ item }) => (
                     <TouchableRipple
                       onPress={() => setSelectedCategory(item)}
-                      style={[styles.categoryItem]}>
+                      style={[styles.categoryItem, { width: itemWidth, paddingVertical: 10 }]}>
                       <View style={{ alignItems: "center" }}>
                         <IconButton
                           icon={categoryIcons[item]}
@@ -357,10 +350,8 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
   },
   categoryItem: {
-    flex: 1,
     alignItems: "center",
-    margin: 8,
-    padding: 10,
+    justifyContent: "center",
   },
   remarkInput: {
     borderColor: "#ddd",
@@ -377,7 +368,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f0f0", // 键盘背景色
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   keyboard: {
     flexDirection: "row",

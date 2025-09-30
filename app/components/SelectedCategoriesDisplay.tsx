@@ -1,16 +1,7 @@
-// components/SelectedCategoriesDisplay.tsx
+import { TxCategory } from "@/src/store/transactionStore";
 import React from "react";
 import { Text, View } from "react-native";
 import { Icon } from "react-native-paper";
-
-type TxCategory =
-  | "转账"
-  | "购物"
-  | "娱乐"
-  | "交通"
-  | "生活缴费"
-  | "餐饮"
-  | "其他";
 
 interface Props {
   selectedCategories: TxCategory[]; // 空数组代表全部

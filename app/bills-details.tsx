@@ -20,9 +20,10 @@ import {
   Text
 } from "react-native-paper";
 import {
+  categoryIcons,
   Transaction,
   TxCategory,
-  useTxStore,
+  useTxStore
 } from "../src/store/transactionStore";
 import AnimatedChip from "./components/AnimatedChip";
 import BillAddModal from "./components/BillAddModal";
@@ -37,21 +38,11 @@ type BillItemProps = {
   item: Transaction;
 };
 
-// 分类图标映射
-const categoryIcons: Record<TxCategory, string> = {
-  转账: "swap-horizontal",
-  购物: "cart",
-  娱乐: "gamepad-variant",
-  交通: "bus",
-  生活缴费: "flash",
-  餐饮: "silverware-fork-knife",
-  其他: "dots-horizontal",
-};
-
 export default function BillsDetailsPage() {
   const router = useRouter();
   const items = useTxStore((s) => s.items);
   const load = useTxStore((s) => s.load);
+  const add = useTxStore((s) => s.add);
   const [refreshing, setRefreshing] = useState(false);
   const [pageCount, setPageCount] = useState(1);
 
@@ -319,7 +310,13 @@ export default function BillsDetailsPage() {
         onClose={() => setShowAddModal(false)}
         onSubmit={(data) => {
           console.log("提交数据:", data);
-          // TODO: 保存到 SQLite + Zustand
+          add({
+            type: data.type,
+            category: data.category,
+            amount: Number(data.amount),
+            note: data.remark,
+            date: data.date,
+          }).catch((e) => console.error("添加账单失败", e));
           setShowAddModal(false);
         }}
       />
