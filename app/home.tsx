@@ -1,8 +1,10 @@
+import { useAppTheme } from "@/src/constants/theme";
+import { useThemedStyles } from "@/src/hooks/useThemedStyles";
 import { Circle, Text as SkiaText, useFont } from "@shopify/react-native-skia";
 import dayjs from "dayjs";
 import { router } from "expo-router";
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Dimensions, ScrollView, StyleSheet, View } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Dimensions, ScrollView, View } from "react-native";
 import { Calendar, LocaleConfig } from "react-native-calendars";
 import { Button, Card, Text } from "react-native-paper";
 import type { SharedValue } from "react-native-reanimated";
@@ -12,6 +14,7 @@ import Animated, {
   useAnimatedReaction,
   useDerivedValue,
 } from "react-native-reanimated";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Area,
   BarGroup,
@@ -69,6 +72,68 @@ LocaleConfig.locales["zh"] = {
 LocaleConfig.defaultLocale = "zh";
 
 export default function Home() {
+  // 获取当前主题
+  const theme = useAppTheme();
+  const styles = useThemedStyles((theme) => ({
+    container: { flex: 1, backgroundColor: theme.colors.background },
+    summaryCard: { margin: 10 },
+    toggle: { flexDirection: "row", justifyContent: "center", marginTop: 10 },
+    toggleBtn: { marginHorizontal: 5 },
+    chartCard: { margin: 10 },
+    empty: { textAlign: "center", color: theme.colors.emptyText, marginVertical: 20 },
+    scrollBox: { marginBottom: 70 },
+    centerBox: { flex: 1, justifyContent: "center", alignItems: "center", color: theme.colors.text, backgroundColor: theme.colors.background },
+  
+    // 6月总计柱状图
+    centeredTooltip: {
+      position: "absolute",
+      top: 8,
+      alignSelf: "center",
+      zIndex: 100,
+      backgroundColor: theme.colors.surface,
+      padding: 6,
+      borderRadius: 5,
+      borderColor: theme.colors.outline,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
+      maxWidth: 180, // 设置最大宽度
+    },
+    tooltipContent: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    tooltipTitle: {
+      fontSize: 13,
+      marginRight: 6,
+      color: theme.colors.text,
+    },
+    amountsContainer: {
+      flexDirection: "column",
+    },
+    amountRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "flex-end",
+    },
+    tooltipText: {
+      fontSize: 12,
+      color: theme.colors.text,
+    },
+    incomeText: {
+      color: theme.colors.income,
+    },
+    expenseText: {
+      color: theme.colors.expense,
+    },
+    amountText: {
+      color: theme.colors.text,
+      minWidth: 60, // 确保金额有足够空间显示
+    },
+  }));
+
   const screenWidth = Dimensions.get("window").width;
 
   const [selected, setSelected] = useState(dayjs().format("YYYY-MM-DD"));
@@ -114,7 +179,8 @@ export default function Home() {
     const dataPoints = dates.map((d) => {
       const dayStr = d.format("YYYY-MM-DD");
       const dayItems = items.filter(
-        (t) => dayjs(t.date).format("YYYY-MM-DD") === dayStr && t.type === showType
+        (t) =>
+          dayjs(t.date).format("YYYY-MM-DD") === dayStr && t.type === showType
       );
       return { x: dayStr, y: dayItems.reduce((sum, t) => sum + t.amount, 0) };
     });
@@ -132,17 +198,17 @@ export default function Home() {
   // ===== 日历高亮 =====
   const marked = useMemo(() => {
     const mark: Record<string, any> = {
-      [selected]: { selected: true, selectedColor: "#F5D76E" },
+      [selected]: { selected: true, selectedColor: theme.colors.primary },
     };
     items.forEach((t) => {
       const d = dayjs(t.date).format("YYYY-MM-DD");
       if (d.startsWith(ym)) {
-        mark[d] = mark[d] || { marked: true, dotColor: "#F5D76E" };
+        mark[d] = mark[d] || { marked: true, dotColor: theme.colors.primary };
         mark[d].marked = true;
       }
     });
     return mark;
-  }, [items, selected, ym]);
+  }, [items, selected, ym, theme]);
 
   useAnimatedReaction(
     () => ({
@@ -211,14 +277,14 @@ export default function Home() {
           cx={x}
           cy={y}
           r={4}
-          color="#FF6B6B"
+          color={theme.colors.primary}
         />
         <SkiaText
           x={textX}
           y={textY}
           text={`${dayjs(date).format("M.D")}  ${cnCurrency(value)}`}
           font={font}
-          color="#333"
+          color={theme.colors.text}
         />
       </>
     );
@@ -258,7 +324,7 @@ export default function Home() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollBox}>
         {/* 日历 */}
         <Animated.View entering={FadeInUp.duration(400)}>
@@ -273,9 +339,10 @@ export default function Home() {
             }
             markedDates={marked}
             theme={{
-              todayTextColor: "#F5D76E",
-              arrowColor: "#F5D76E",
-              monthTextColor: "#333",
+              calendarBackground: theme.colors.background,
+              todayTextColor: theme.colors.primary,
+              arrowColor: theme.colors.primary,
+              monthTextColor: theme.colors.text,
               textDayFontSize: 16,
               textMonthFontSize: 18,
               textDayHeaderFontSize: 14,
@@ -286,9 +353,9 @@ export default function Home() {
         {/* 月汇总 */}
         <Card style={styles.summaryCard}>
           <Card.Content>
-            <Text variant="titleMedium">本月汇总({ym})</Text>
-            <Text>收入：{cnCurrency(income)}</Text>
-            <Text>支出：{cnCurrency(expense)}</Text>
+            <Text variant="titleMedium" style={{ color: theme.colors.text }}>本月汇总({ym})</Text>
+            <Text style={{ color: theme.colors.income }}>收入：{cnCurrency(income)}</Text>
+            <Text style={{ color: theme.colors.expense }}>支出：{cnCurrency(expense)}</Text>
           </Card.Content>
         </Card>
 
@@ -312,7 +379,7 @@ export default function Home() {
         {/* 每日折线图 */}
         <Card style={styles.chartCard}>
           <Card.Content>
-            <Text variant="titleMedium">
+            <Text variant="titleMedium" style={{ color: theme.colors.text }}>
               每日{showType === "expense" ? "支出" : "收入"}趋势
             </Text>
             {dailySeries.dataPoints.some((point) => point.y > 0) ? (
@@ -327,8 +394,8 @@ export default function Home() {
                     axisOptions={{
                       font,
                       tickCount: { y: 10, x: 6 }, // 控制Y轴10个刻度，X轴刻度数量将通过tickValues单独指定
-                      lineColor: "#d4d4d8",
-                      labelColor: "#86909c",
+                      lineColor: theme.colors.outline,
+                      labelColor: theme.colors.emptyText,
                       formatXLabel: (value) => {
                         const date = new Date(value);
                         return `${date.getMonth() + 1}.${date.getDate()}`;
@@ -338,14 +405,18 @@ export default function Home() {
                       <>
                         <Line
                           points={points.y}
-                          color="#FF6B6B"
+                          color={
+                            showType === "expense"
+                              ? theme.colors.expense
+                              : theme.colors.income
+                          }
                           strokeWidth={2}
                           animate={{ type: "spring" }}
                           curveType="linear"
                         />
                         <Area
                           points={points.y}
-                          color="#FDCDC5"
+                          color={`${showType === "expense" ? theme.colors.expense : theme.colors.income}33`}
                           y0={chartBounds.bottom}
                           animate={{ type: "spring" }}
                           curveType="linear"
@@ -374,7 +445,7 @@ export default function Home() {
         {/* 月度汇总柱状图 */}
         <Card style={styles.chartCard}>
           <Card.Content>
-            <Text variant="titleMedium">近6个月收支对比</Text>
+            <Text variant="titleMedium" style={{ color: theme.colors.text }}>近6个月收支对比</Text>
             {monthlySeries.data && monthlySeries.data.length > 0 ? (
               <View
                 style={{ height: 240, width: screenWidth - 40 }}
@@ -423,7 +494,7 @@ export default function Home() {
                   axisOptions={{
                     font,
                     tickCount: { y: 10, x: 6 },
-                    labelColor: "#86909c",
+                    labelColor: theme.colors.emptyText,
                   }}>
                   {({ points, chartBounds }) => (
                     <>
@@ -433,11 +504,11 @@ export default function Home() {
                         withinGroupPadding={0.1}>
                         <BarGroup.Bar
                           points={points.income}
-                          color="#6BCB77"
+                          color={theme.colors.income}
                         />
                         <BarGroup.Bar
                           points={points.expense}
-                          color="#FF6B6B"
+                          color={theme.colors.expense}
                         />
                       </BarGroup>
                     </>
@@ -450,65 +521,6 @@ export default function Home() {
           </Card.Content>
         </Card>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFFBEA", marginTop: 30 },
-  summaryCard: { margin: 10 },
-  toggle: { flexDirection: "row", justifyContent: "center", marginTop: 10 },
-  toggleBtn: { marginHorizontal: 5 },
-  chartCard: { margin: 10 },
-  empty: { textAlign: "center", color: "#888", marginVertical: 20 },
-  scrollBox: { marginBottom: 70 },
-  centerBox: { flex: 1, justifyContent: "center", alignItems: "center" },
-
-  // 6月总计柱状图
-  centeredTooltip: {
-    position: "absolute",
-    top: 8,
-    alignSelf: "center",
-    zIndex: 100,
-    backgroundColor: "rgba(255, 255, 255, 0.7)",
-    padding: 6,
-    borderRadius: 5,
-    borderColor: "rgba(255, 255, 255, 0.7)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    maxWidth: 180, // 设置最大宽度
-  },
-  tooltipContent: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  tooltipTitle: {
-    fontSize: 13,
-    marginRight: 6,
-  },
-  amountsContainer: {
-    flexDirection: "column",
-  },
-  amountRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-end",
-  },
-  tooltipText: {
-    fontSize: 12,
-    color: "#333",
-  },
-  incomeText: {
-    color: "#6BCB77",
-  },
-  expenseText: {
-    color: "#FF6B6B",
-  },
-  amountText: {
-    color: "#333",
-    minWidth: 60, // 确保金额有足够空间显示
-  },
-});

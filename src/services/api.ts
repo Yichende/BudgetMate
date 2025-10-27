@@ -1,7 +1,7 @@
 import axios from "axios";
 import Constants from "expo-constants";
-import { useAuthStore } from "../store/authStore";
 
+console.log("✅ api.ts 已加载");
 
 let authToken: string | null = null;
 
@@ -12,23 +12,27 @@ export const setAuthToken = (token: string | null) => {
 };
 
 // 获取局域网 IP 的函数
-const getBaseURL = () => {
-  let debuggerHost = Constants.manifest2?.extra?.expoGo?.debuggerHost 
-                  || Constants.expoConfig?.hostUri;
+export const getBaseURL = () => {
+  try {
+    const debuggerHost =
+      Constants?.manifest2?.extra?.expoGo?.debuggerHost ||
+      Constants?.expoConfig?.hostUri;
 
-  // console.log("debuggerHost =>", debuggerHost);
+    if (!debuggerHost) {
+      console.warn("⚠️ 无法获取调试主机地址，回退到 10.0.2.2");
+      return `http://10.0.2.2:${PORT}/api`;
+    }
 
-  if (!debuggerHost) {
-    console.warn("⚠️ 无法获取调试主机地址，回退到 localhost");
-    return `http://localhost:${PORT}/api`;
+    const ip = debuggerHost.split(":")[0];
+    const baseURL = `http://${ip}:${PORT}/api`;
+    console.log("✅ 获取到局域网 API 地址:", baseURL);
+    return baseURL;
+  } catch (err) {
+    console.error("❌ 获取调试主机地址失败，使用备用地址:", err);
+    return `http://10.0.2.2:${PORT}/api`;
   }
-
-  // 从 "192.168.x.x:19000" 里提取 IP 部分
-  const ip = debuggerHost.split(":").shift();
-  console.log("✅ 获取到局域网 IP:", ip);
-
-  return `http://${ip}:${PORT}/api`;
 };
+
 
 const API = axios.create({
   baseURL: getBaseURL(),
@@ -46,12 +50,12 @@ API.interceptors.response.use(
   (resp) => resp,
   async (error) => {
     const status = error?.response?.status;
+    const { useAuthStore } = await import("../store/authStore");
     
     if (status === 401) {
       // 全局统一处理
       try {
-        const logout = useAuthStore.getState().logout;
-        await logout();
+        await useAuthStore.getState().logout();
       } catch (e) {
         console.log('Error message: ', e);
       }

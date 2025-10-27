@@ -17,7 +17,8 @@ import {
   List,
   Modal,
   Portal,
-  Text
+  Text,
+  useTheme
 } from "react-native-paper";
 import {
   categoryIcons,
@@ -45,6 +46,7 @@ export default function BillsDetailsPage() {
   const add = useTxStore((s) => s.add);
   const [refreshing, setRefreshing] = useState(false);
   const [pageCount, setPageCount] = useState(1);
+  const { colors } = useTheme();
 
   // 当前年月
   const [currentYM, setCurrentYM] = useState(dayjs().format("YYYY-MM"));

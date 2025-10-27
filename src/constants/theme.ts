@@ -1,7 +1,8 @@
+import React, { useContext } from 'react';
 import {
   MD3DarkTheme,
   MD3LightTheme,
-  configureFonts,
+  configureFonts
 } from "react-native-paper";
 
 import { Platform } from "react-native";
@@ -45,6 +46,18 @@ export const lightTheme = {
     background: "#FFFBEA",
     surface: "#FFFFFF",
     text: "#333333",
+    secondary: "#7A46A8",
+    outline: "#E0E0E0",
+    income: "#4CAF50",
+    expense: "#F44336",
+    chipBg: "#f2f2f2",
+    chipSelectedBg: "#F7E8FF",
+    headerBg: "#F5D76E",
+    headerText: "#333333",
+    modalBg: "#FFFFFF",
+    emptyText: "#888",
+    chartLine: "#3B82F6", // 折线主色
+    chartFill: "#BFDBFE", // 折线下方填充
   },
   fonts: configureFonts({ config: fontConfig, isV3: true })
 };
@@ -53,10 +66,27 @@ export const darkTheme = {
   ...MD3DarkTheme,
   colors: {
     ...MD3DarkTheme.colors,
-    primary: "#F5D76E",
-    background: "#1B1A17",
-    surface: "#22211E",
-    text: "#F5F5F5",
+    primary: "#C7A93A", // FAB/主按钮金色
+    background: "#1B1A17", // 页面背景
+    surface: "#2A2824", // 卡片、模态背景
+    text: "#EAEAEA", // 主文字
+    secondary: "#D1A9FF", // 紫色文字
+    outline: "#3E3C38", // 分割线
+    income: "#81C784", // 收入绿色
+    expense: "#E57373", // 支出红色
+    chipBg: "#3B3A35",
+    chipSelectedBg: "#3C2A4C",
+    headerBg: "#3B362F",
+    headerText: "#F5EBC7",
+    modalBg: "#2B2A27",
+    emptyText: "#AAA",
+    chartLine: "#93C5FD",
+    chartFill: "#1E40AF",
   },
   fonts: configureFonts({ config: fontConfig, isV3: true }),
 };
+
+export type AppTheme = typeof lightTheme;
+export const AppThemeContext = React.createContext<AppTheme>(lightTheme);
+
+export const useAppTheme = () => useContext(AppThemeContext);
