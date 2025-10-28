@@ -1,13 +1,15 @@
+import { useAppTheme } from "@/src/constants/theme";
+import { useThemedStyles } from "@/src/hooks/useThemedStyles";
 import { TxCategory, categoryIcons } from "@/src/store/transactionStore";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import dayjs from "dayjs";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
-  Dimensions, FlatList,
+  Dimensions,
+  FlatList,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
-  StyleSheet,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View
@@ -40,6 +42,112 @@ export default function BillAddModal({
   onClose,
   onSubmit,
 }: BillAddModalProps) {
+  const theme = useAppTheme();
+  const styles = useThemedStyles((theme) => ({
+    modalWrapper: {
+      justifyContent: "flex-end",
+    },
+    modalContent: {
+      backgroundColor: theme.colors.modalBg,
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      padding: 16,
+      minHeight: "80%",
+    },
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 12,
+    },
+    typeBtn: {
+      marginRight: 8,
+    },
+    amountInput: {
+      fontSize: 16,
+      fontWeight: "bold",
+      marginVertical: 16,
+      borderBottomWidth: 1,
+      borderColor: theme.colors.outline,
+      color: theme.colors.text,
+    },
+    categoryItem: {
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    remarkInput: {
+      borderColor: theme.colors.outline,
+      borderRadius: 8,
+      marginVertical: 8,
+    },
+    noteBtn: {
+      alignSelf: "flex-start",
+    },
+    // 键盘
+    keyboardContainer: {
+      marginHorizontal: -16, // 抵消父容器的padding
+      marginBottom: -16, // 抵消父容器的底部padding
+      backgroundColor: theme.colors.surface, // 键盘背景色
+      borderBottomLeftRadius: 16,
+      borderBottomRightRadius: 16,
+      overflow: "hidden",
+    },
+    keyboard: {
+      flexDirection: "row",
+      height: 240, // 固定高度，4行 × 60
+      width: "100%",
+      marginTop: "auto",
+      paddingHorizontal: 16,
+    },
+    numPad: {
+      flex: 3, // 占3/4宽
+      flexDirection: "column",
+      // margin: -5,
+    },
+    numRow: {
+      flex: 1, // 每行平均分配高度
+      flexDirection: "row",
+    },
+    actionPad: {
+      flex: 1, // 占1/4宽度
+      flexDirection: "column",
+      marginLeft: 8,
+      // margin: -5,
+    },
+    actionKey: {
+      justifyContent: "center",
+      margin: 5,
+      alignItems: "center",
+      borderWidth: 0.5,
+      borderColor: theme.colors.outline,
+      borderRadius: 10,
+    },
+    backKey: {
+      flex: 1, // 返回按钮高度占1份
+      backgroundColor: theme.colors.surface,
+    },
+    okKey: {
+      flex: 3, // 确定按钮高度占3份
+      backgroundColor: theme.colors.primary,
+    },
+    key: {
+      flex: 1, // 每列平均分配宽度
+      margin: 5,
+      justifyContent: "center",
+      alignItems: "center",
+      borderWidth: 0.5,
+      borderColor: theme.colors.outline,
+      borderRadius: 10,
+      backgroundColor: theme.colors.surface,
+    },
+    zeroKey: {
+      flex: 2, // 数字0占两份宽度
+    },
+    keyText: {
+      fontSize: 24,
+      fontWeight: "600",
+      color: theme.colors.text,
+    },
+  }));
   const [type, setType] = useState<"expense" | "income">("expense");
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -159,7 +267,10 @@ export default function BillAddModal({
                   renderItem={({ item }) => (
                     <TouchableRipple
                       onPress={() => setSelectedCategory(item)}
-                      style={[styles.categoryItem, { width: itemWidth, paddingVertical: 10 }]}>
+                      style={[
+                        styles.categoryItem,
+                        { width: itemWidth, paddingVertical: 10 },
+                      ]}>
                       <View style={{ alignItems: "center" }}>
                         <IconButton
                           icon={categoryIcons[item]}
@@ -322,107 +433,3 @@ export default function BillAddModal({
     </Portal>
   );
 }
-
-const styles = StyleSheet.create({
-  modalWrapper: {
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    padding: 16,
-    minHeight: "80%",
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  typeBtn: {
-    marginRight: 8,
-  },
-  amountInput: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginVertical: 16,
-    borderBottomWidth: 1,
-    borderColor: "#ddd",
-  },
-  categoryItem: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  remarkInput: {
-    borderColor: "#ddd",
-    borderRadius: 8,
-    marginVertical: 8,
-  },
-  noteBtn: {
-    alignSelf: "flex-start",
-  },
-  // 键盘
-  keyboardContainer: {
-    marginHorizontal: -16, // 抵消父容器的padding
-    marginBottom: -16, // 抵消父容器的底部padding
-    backgroundColor: "#f0f0f0", // 键盘背景色
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-    overflow: "hidden",
-  },
-  keyboard: {
-    flexDirection: "row",
-    height: 240, // 固定高度，4行 × 60
-    width: "100%",
-    marginTop: "auto",
-    paddingHorizontal: 16,
-  },
-  numPad: {
-    flex: 3, // 占3/4宽
-    flexDirection: "column",
-    // margin: -5,
-  },
-  numRow: {
-    flex: 1, // 每行平均分配高度
-    flexDirection: "row",
-  },
-  actionPad: {
-    flex: 1, // 占1/4宽度
-    flexDirection: "column",
-    marginLeft: 8,
-    // margin: -5,
-  },
-  actionKey: {
-    justifyContent: "center",
-    margin: 5,
-    alignItems: "center",
-    borderWidth: 0.5,
-    borderColor: "#f0f0f0",
-    borderRadius: 10,
-  },
-  backKey: {
-    flex: 1, // 返回按钮高度占1份
-    backgroundColor: "#fff",
-  },
-  okKey: {
-    flex: 3, // 确定按钮高度占3份
-    backgroundColor: "#007AFF",
-  },
-  key: {
-    flex: 1, // 每列平均分配宽度
-    margin: 5,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 0.5,
-    borderColor: "#f0f0f0",
-    borderRadius: 10,
-    backgroundColor: "#fff",
-  },
-  zeroKey: {
-    flex: 2, // 数字0占两份宽度
-  },
-  keyText: {
-    fontSize: 24,
-    fontWeight: "600",
-  },
-});

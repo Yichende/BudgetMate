@@ -48,8 +48,8 @@ export const lightTheme = {
     text: "#333333",
     secondary: "#7A46A8",
     outline: "#E0E0E0",
-    income: "#4CAF50",
-    expense: "#F44336",
+    income: "#F44336",
+    expense: "#4CAF50",
     chipBg: "#f2f2f2",
     chipSelectedBg: "#F7E8FF",
     headerBg: "#F5D76E",
@@ -72,8 +72,8 @@ export const darkTheme = {
     text: "#EAEAEA", // 主文字
     secondary: "#D1A9FF", // 紫色文字
     outline: "#3E3C38", // 分割线
-    income: "#81C784", // 收入绿色
-    expense: "#E57373", // 支出红色
+    income: "#E57373", // 收入
+    expense: "#81C784", // 支出
     chipBg: "#3B3A35",
     chipSelectedBg: "#3C2A4C",
     headerBg: "#3B362F",

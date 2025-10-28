@@ -1,3 +1,4 @@
+import { useAppTheme } from "@/src/constants/theme";
 import dayjs from "dayjs";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
@@ -30,29 +31,32 @@ import {
 
 type BillItemProps = {
   item: Transaction;
+  theme: ReturnType<typeof useAppTheme>;
 };
 
 type HiddenItemProps = {
   item: Transaction;
   onEdit: (tx: Transaction) => void;
   onDelete: (id: string) => void;
+  theme: ReturnType<typeof useAppTheme>;
 };
 
-const BillItem = React.memo(({ item }: BillItemProps) => {
+const BillItem = React.memo(({ item, theme }: BillItemProps) => {
   const amountText =
     (item.type === "income" ? "+" : "-") + item.amount.toFixed(2);
-  const amountColor = item.type === "income" ? "#4CAF50" : "#F44336";
+  const amountColor =
+    item.type === "income" ? theme.colors.income : theme.colors.expense;
   const timeStr = dayjs(item.date).format("HH:mm");
   return (
     <List.Item
-      style={styles.billItem}
+      style={[styles.billItem, { backgroundColor: theme.colors.surface }]}
       title={`${item.category}`}
       description={`${timeStr}  ${item.note ?? ""}`}
       left={(props) => (
         <List.Icon
           {...props}
           icon={categoryIcons[item.category]}
-          color={item.type === "income" ? "#4CAF50" : "#F44336"}
+          color={amountColor}
         />
       )}
       right={() => (
@@ -64,33 +68,39 @@ const BillItem = React.memo(({ item }: BillItemProps) => {
   );
 });
 
-const HiddenItem = React.memo(({ item, onEdit, onDelete }: HiddenItemProps) => (
-  <View style={styles.hiddenRow}>
-    <IconButton
-      icon="pencil"
-      iconColor="white"
-      size={24}
-      style={styles.editButton}
-      onPress={() => onEdit(item)}
-    />
-    <IconButton
-      icon="delete"
-      iconColor="white"
-      size={24}
-      style={styles.deleteButton}
-      onPress={() => onDelete(item.id)}
-    />
-  </View>
-));
+const HiddenItem = React.memo(
+  ({ item, onEdit, onDelete, theme }: HiddenItemProps) => (
+    <View style={styles.hiddenRow}>
+      <IconButton
+        icon="pencil"
+        iconColor="white"
+        size={24}
+        style={[styles.editButton, { backgroundColor: theme.colors.income }]}
+        onPress={() => onEdit(item)}
+      />
+      <IconButton
+        icon="delete"
+        iconColor="white"
+        size={24}
+        style={{ backgroundColor: theme.colors.expense }}
+        onPress={() => onDelete(item.id)}
+      />
+    </View>
+  )
+);
 
 export default function BillsOfDatePage() {
+  const theme = useAppTheme();
   const router = useRouter();
   const { date } = useLocalSearchParams<{ date: string }>();
   const items = useTxStore((s) => s.items);
   const bills = useMemo(
-    () => items.filter(
-      (t) => dayjs(t.date).format("YYYY-MM-DD") === dayjs(date).format("YYYY-MM-DD")
-    ),
+    () =>
+      items.filter(
+        (t) =>
+          dayjs(t.date).format("YYYY-MM-DD") ===
+          dayjs(date).format("YYYY-MM-DD")
+      ),
     [items, date]
   );
 
@@ -127,16 +137,21 @@ export default function BillsOfDatePage() {
   };
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* 顶部导航 */}
-      <Appbar.Header>
+      <Appbar.Header style={{ backgroundColor: theme.colors.headerBg }}>
         <Appbar.BackAction
+          color={theme.colors.headerText}
           onPress={() => {
             if (router.canGoBack()) router.back();
             else router.replace("/home"); // 兜底返回首页
           }}
         />
-        <Appbar.Content title={dayjs(date).format("YYYY年MM月DD日")} />
+        <Appbar.Content
+          titleStyle={{ color: theme.colors.headerText }}
+          title={dayjs(date).format("YYYY年MM月DD日")}
+        />
       </Appbar.Header>
 
       {/* 内容 */}
@@ -144,7 +159,7 @@ export default function BillsOfDatePage() {
         <View style={styles.empty}>
           <Text
             variant="titleMedium"
-            style={{ color: "#888" }}>
+            style={{ color: theme.colors.emptyText }}>
             暂无账单
           </Text>
         </View>
@@ -152,10 +167,11 @@ export default function BillsOfDatePage() {
         <SwipeListView
           data={bills}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <BillItem item={item} />}
+          renderItem={({ item }) => <BillItem item={item} theme={theme} />}
           renderHiddenItem={({ item }) => (
             <HiddenItem
               item={item}
+              theme={theme}
               onEdit={openEdit}
               onDelete={setConfirmDeleteId}
             />
@@ -173,8 +189,11 @@ export default function BillsOfDatePage() {
         <Dialog
           visible={!!editing}
           onDismiss={() => setEditing(null)}
-          style={{ borderRadius: 12 }}>
-          <Dialog.Title style={{ color: "#8A0993", fontWeight: 700 }}>
+          style={{
+            borderRadius: 12,
+            backgroundColor: theme.colors.modalBg,
+          }}>
+          <Dialog.Title style={{ color: theme.colors.primary, fontWeight: 700 }}>
             编辑账单
           </Dialog.Title>
           <Dialog.ScrollArea>
@@ -184,7 +203,7 @@ export default function BillsOfDatePage() {
                 <Dialog.Content>
                   <Text
                     variant="titleMedium"
-                    style={styles.dialogTitle}>
+                    style={[styles.dialogTitle, { color: theme.colors.text }]}>
                     收入 / 支出
                   </Text>
                   <Divider />
@@ -196,10 +215,12 @@ export default function BillsOfDatePage() {
                     <RadioButton.Item
                       label="支出"
                       value="expense"
+                      labelStyle={{ color: theme.colors.text }}
                     />
                     <RadioButton.Item
                       label="收入"
                       value="income"
+                      labelStyle={{ color: theme.colors.text }}
                     />
                   </RadioButton.Group>
 
@@ -214,17 +235,23 @@ export default function BillsOfDatePage() {
                     keyboardType="numeric"
                     value={editAmount}
                     onChangeText={setEditAmount}
+                    textColor={theme.colors.text}
+                    style={{ backgroundColor: theme.colors.surface }}
                   />
                   <TextInput
                     label="备注"
                     value={editNote}
                     onChangeText={setEditNote}
-                    style={{ marginTop: 10 }}
+                    style={{
+                      marginTop: 10,
+                      backgroundColor: theme.colors.surface,
+                    }}
+                    textColor={theme.colors.text}
                   />
 
                   <Text
                     variant="titleMedium"
-                    style={styles.dialogTitle}>
+                    style={[styles.dialogTitle, { color: theme.colors.text }]}>
                     分类
                   </Text>
                   <Divider />
@@ -236,7 +263,7 @@ export default function BillsOfDatePage() {
                         key={cat}
                         label={cat}
                         value={cat}
-                        labelStyle={{ fontSize: 16 }}
+                        labelStyle={{ fontSize: 16, color: theme.colors.text }}
                       />
                     ))}
                   </RadioButton.Group>
@@ -253,10 +280,11 @@ export default function BillsOfDatePage() {
         {/* 删除确认 Modal */}
         <Dialog
           visible={!!confirmDeleteId}
-          onDismiss={() => setConfirmDeleteId(null)}>
-          <Dialog.Title>确认删除</Dialog.Title>
+          onDismiss={() => setConfirmDeleteId(null)}
+          style={{ backgroundColor: theme.colors.modalBg }}>
+          <Dialog.Title style={{ color: theme.colors.text }}>确认删除</Dialog.Title>
           <Dialog.Content>
-            <Text>确定要删除这条账单吗？</Text>
+            <Text style={{ color: theme.colors.text }}>确定要删除这条账单吗？</Text>
           </Dialog.Content>
           <Dialog.Actions>
             <Button onPress={() => setConfirmDeleteId(null)}>取消</Button>
@@ -266,7 +294,8 @@ export default function BillsOfDatePage() {
                   await remove(confirmDeleteId);
                   setConfirmDeleteId(null);
                 }
-              }}>
+              }}
+              textColor={theme.colors.expense}>
               删除
             </Button>
           </Dialog.Actions>
@@ -277,7 +306,7 @@ export default function BillsOfDatePage() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFF8E1" },
+  container: { flex: 1 },
   dialogTitle: { marginTop: 10, fontWeight: 700 },
   empty: {
     flex: 1,
@@ -302,6 +331,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingRight: 10,
   },
-  editButton: { backgroundColor: "#4CAF50", marginRight: 10 },
-  deleteButton: { backgroundColor: "#F44336" },
+  editButton: { marginRight: 10 },
 });

@@ -1,15 +1,17 @@
+import { useAppTheme } from "@/src/constants/theme";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
 import { useRouter } from "expo-router";
 import * as Sharing from "expo-sharing";
-import React from "react";
 import { Alert, StyleSheet, View } from "react-native";
 import { Button, Switch, Text, useTheme } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthStore } from "../src/store/authStore";
 import { useTxStore } from "../src/store/transactionStore";
 import { useUIStore } from "../src/store/uiStore";
 
 export default function SettingsPage() {
+  const theme = useAppTheme();
   const { colors } = useTheme();
   const darkMode = useUIStore((state) => state.darkMode);
   const toggleDarkMode = useUIStore((state) => state.toggleDark);
@@ -57,12 +59,11 @@ export default function SettingsPage() {
 
   const logoutSubmit = async () => {
     await logout();
-    Alert.alert('退出登录');
     router.replace("/login");
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={[styles.container, {backgroundColor: theme.colors.background}]}>
       <View style={styles.row}>
         <Text>深色模式</Text>
         <Switch
@@ -89,12 +90,12 @@ export default function SettingsPage() {
       style={{ marginTop: 10}}>
         退出登录
       </Button>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#FFFBEA" },
+  container: { flex: 1, padding: 20 },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",

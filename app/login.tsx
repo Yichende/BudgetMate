@@ -1,8 +1,9 @@
+import { useAppTheme } from "@/src/constants/theme";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import LottieView from "lottie-react-native";
-import React, { useState } from "react";
+import { useState } from "react";
 import { StyleSheet } from "react-native";
 import { Button, HelperText, Text, TextInput } from "react-native-paper";
 import Animated, {
@@ -15,6 +16,7 @@ import Animated, {
 import { useAuthStore } from "../src/store/authStore";
 
 export default function LoginScreen() {
+  const theme = useAppTheme();
   const login = useAuthStore((state) => state.login);
   const loading = useAuthStore((state) => state.loading);
   const router = useRouter();
@@ -111,7 +113,7 @@ export default function LoginScreen() {
   return (
     <Animated.View
       entering={FadeIn.duration(400)}
-      style={styles.container}>
+      style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Animated.View style={afterAnimatedStyle}>
         <Animated.View style={animatedStyle}>
           <LottieView
@@ -190,7 +192,6 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFBEA",
     justifyContent: "center",
     padding: 20,
   },

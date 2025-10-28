@@ -1,12 +1,13 @@
+import { useAppTheme } from "@/src/constants/theme";
+import { useThemedStyles } from "@/src/hooks/useThemedStyles";
 import dayjs from "dayjs";
 import { useRouter } from "expo-router";
-import React, { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   FlatList,
   ListRenderItemInfo,
   RefreshControl,
-  StyleSheet,
-  View,
+  View
 } from "react-native";
 import {
   Appbar,
@@ -17,14 +18,13 @@ import {
   List,
   Modal,
   Portal,
-  Text,
-  useTheme
+  Text
 } from "react-native-paper";
 import {
   categoryIcons,
   Transaction,
   TxCategory,
-  useTxStore
+  useTxStore,
 } from "../src/store/transactionStore";
 import AnimatedChip from "./components/AnimatedChip";
 import BillAddModal from "./components/BillAddModal";
@@ -44,16 +44,84 @@ export default function BillsDetailsPage() {
   const items = useTxStore((s) => s.items);
   const load = useTxStore((s) => s.load);
   const add = useTxStore((s) => s.add);
+  const theme = useAppTheme();
+  const styles = useThemedStyles((t) => ({
+    container: { flex: 1, backgroundColor: t.colors.background },
+    appbarTitle: {
+      fontSize: 18,
+      fontWeight: "bold",
+      textAlign: "center",
+      color: t.colors.text,
+    },
+    header: { padding: 12, backgroundColor: t.colors.headerBg },
+    filterRow: { flexDirection: "row", marginBottom: 8 },
+    summaryRow: { flexDirection: "row", alignItems: "center" },
+    filterBtnLabel: {
+      fontSize: 14,
+      borderRadius: 1,
+      fontWeight: "bold",
+    },
+    card: {
+      marginHorizontal: 8,
+      marginTop: 10,
+      borderRadius: 12,
+      overflow: "hidden",
+      backgroundColor: t.colors.surface,
+    },
+    empty: { padding: 24, alignItems: "center" },
+    modal: {
+      backgroundColor: t.colors.modalBg,
+      margin: 20,
+      padding: 20,
+      borderRadius: 12,
+    },
+    modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12, color: t.colors.text, },
+    bottomSheet: {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: t.colors.modalBg,
+      padding: 20,
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+    },
+    chipContainer: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 8,
+    },
+    chip: {
+      margin: 4,
+      backgroundColor: t.colors.chipBg,
+    },
+    chipSelected: {
+      backgroundColor: t.colors.chipSelectedBg, // 选中背景7A46A8
+    },
+    modalContainer: {
+      flex: 1,
+      justifyContent: "center",
+      backgroundColor: "rgba(0,0,0,0.5)",
+    },
+    fab: {
+      position: "absolute",
+      right: 16,
+      bottom: 100,
+      backgroundColor: t.colors.primary,
+    },
+  }));
+
   const [refreshing, setRefreshing] = useState(false);
   const [pageCount, setPageCount] = useState(1);
-  const { colors } = useTheme();
 
   // 当前年月
   const [currentYM, setCurrentYM] = useState(dayjs().format("YYYY-MM"));
   const [openYMPicker, setOpenYMPicker] = useState(false);
 
   // 筛选 Modal
-  const [selectedCategories, setSelectedCategories] = useState<TxCategory[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<TxCategory[]>(
+    []
+  );
   const [modalVisible, setModalVisible] = useState(false);
   // 添加账单 Modal
   const [showAddModal, setShowAddModal] = useState(false);
@@ -325,67 +393,3 @@ export default function BillsDetailsPage() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFFBEA" },
-  appbarTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  header: { padding: 12, backgroundColor: "#F5D76E" },
-  filterRow: { flexDirection: "row", marginBottom: 8 },
-  summaryRow: { flexDirection: "row", alignItems: "center" },
-  filterBtnLabel: {
-    fontSize: 14,
-    borderRadius: 1,
-    fontWeight: "bold",
-  },
-  card: {
-    marginHorizontal: 8,
-    marginTop: 10,
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  empty: { padding: 24, alignItems: "center" },
-  modal: {
-    backgroundColor: "white",
-    margin: 20,
-    padding: 20,
-    borderRadius: 12,
-  },
-  modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12 },
-  bottomSheet: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "white",
-    padding: 20,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-  chipContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  chip: {
-    margin: 4,
-    backgroundColor: "#f2f2f2",
-  },
-  chipSelected: {
-    backgroundColor: "#F7E8FF", // 选中背景7A46A8
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  fab: {
-    position: "absolute",
-    right: 16,
-    bottom: 100,
-    backgroundColor: "#F5D76E",
-  },
-});
