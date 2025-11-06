@@ -10,6 +10,7 @@ type AuthState = {
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
+  register: (username: string, email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   restore: () => Promise<void>;
 };
@@ -31,6 +32,28 @@ export const useAuthStore = create<AuthState>((set) => ({
       return true;
     } catch (e) {
       console.warn("登录失败", e);
+      return false;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  register: async (username, email, password) => {
+    try {
+      set({ loading: true });
+      const res = await API.post("/user/register", { username, email, password });
+      console.log("注册成功", res.data);
+
+      if (res.data.token) {
+        const { token, user } = res.data;
+        await AsyncStorage.setItem("token", token);
+        setAuthToken(token);
+        set({ token, user });
+      }
+      
+      return true;
+    } catch (e) {
+      console.warn("注册失败", e);
       return false;
     } finally {
       set({ loading: false });

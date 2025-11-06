@@ -1,11 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as SQLite from "expo-sqlite";
 
 import NetInfo from "@react-native-community/netinfo";
 import dayjs from "dayjs";
 import { router } from "expo-router";
 import { create } from "zustand";
 import API from "../services/api";
+import dbHelper from "../utils/SQLiteHelper";
 
 export type TxType = "expense" | "income";
 export type TxCategory =
@@ -57,22 +57,6 @@ export type Transaction = {
   synced?: boolean;
 };
 
-// 初始化 SQLite 数据库
-const db = SQLite.openDatabaseSync("transactions.db");
-
-// 初始化建表
-db.execSync(`
-  CREATE TABLE IF NOT EXISTS transactions (
-    id TEXT PRIMARY KEY NOT NULL,
-    type TEXT NOT NULL,
-    category TEXT NOT NULL,
-    amount REAL NOT NULL,
-    note TEXT,
-    date TEXT NOT NULL,
-    synced INTEGER DEFAULT 0
-  );
-`);
-
 type TransactionState = {
   items: Transaction[];
   isSyncing: boolean;
@@ -91,15 +75,23 @@ type TransactionState = {
     data: { month: string; income: number; expense: number }[];
   };
   clearLocal: () => Promise<void>;
+  hasLoadedFromNetwork: boolean;
 };
 
 export const useTxStore = create<TransactionState>((set, get) => {
   return {
     items: [],
     isSyncing: false,
+    hasLoadedFromNetwork: false,
 
     // load 从 API + SQLite 同步
-    load: async () => {
+    load: async (forceNetwork = false) => {
+      const { hasLoadedFromNetwork } = get();
+
+      if (hasLoadedFromNetwork && !forceNetwork) {
+        set({ items: dbHelper.getAll() });
+        return;
+      }
       try {
         const token = await AsyncStorage.getItem("token");
 
@@ -111,9 +103,7 @@ export const useTxStore = create<TransactionState>((set, get) => {
             return;
           } else {
             console.warn("没有 token 且无网络，只能使用本地缓存");
-            const local: Transaction[] =
-              db.getAllSync<Transaction>("SELECT * FROM transactions") || [];
-            set({ items: local });
+            set({ items: dbHelper.getAll() });
             return;
           }
         }
@@ -124,36 +114,13 @@ export const useTxStore = create<TransactionState>((set, get) => {
         if (res.status !== 200) throw new Error("加载账单失败");
 
         const bills: Transaction[] = res.data;
-        set({ items: bills });
+        set({ items: bills, hasLoadedFromNetwork: true });
 
         // 使用事务批量插入
-        db.execSync("BEGIN TRANSACTION");
-        try {
-          db.execSync("DELETE FROM transactions");
-          for (const b of bills) {
-            db.runSync(
-              "INSERT INTO transactions (id, type, category, amount, note, date, synced) VALUES (?, ?, ?, ?, ?, ?, ?)",
-              [
-                b.id,
-                b.type,
-                b.category,
-                b.amount,
-                b.note ?? null,
-                b.date,
-                b.synced ? 1 : 0,
-              ]
-            );
-          }
-          db.execSync("COMMIT");
-        } catch (e) {
-          db.execSync("ROLLBACK");
-          throw e;
-        }
+        dbHelper.replaceAll(bills);
       } catch (err) {
         console.error("❌ load bills error, fallback to local", err);
-        const local: Transaction[] =
-          db.getAllSync<Transaction>("SELECT * FROM transactions") || [];
-        set({ items: local });
+        set({ items: dbHelper.getAll() });
       }
     },
 
@@ -163,18 +130,7 @@ export const useTxStore = create<TransactionState>((set, get) => {
       const items = [...get().items, newTx];
       set({ items });
 
-      db.runSync(
-        "INSERT INTO transactions (id, type, category, amount, note, date, synced) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        [
-          newTx.id,
-          newTx.type,
-          newTx.category,
-          newTx.amount,
-          newTx.note ?? null,
-          newTx.date,
-          0,
-        ]
-      );
+      dbHelper.insert(newTx);
 
       try {
         const token = await AsyncStorage.getItem("token");
@@ -194,7 +150,7 @@ export const useTxStore = create<TransactionState>((set, get) => {
 
         if (res.status === 200 || res.status === 201) {
           // 更新 SQLite 同步状态
-          db.runSync("UPDATE transactions SET synced=1 WHERE id=?", [newTx.id]);
+          dbHelper.markSynced(newTx.id);
           set({
             items: get().items.map((t) =>
               t.id === newTx.id ? { ...t, synced: true } : t
@@ -228,18 +184,7 @@ export const useTxStore = create<TransactionState>((set, get) => {
 
       const tx = items.find((t) => t.id === id);
       if (tx) {
-        db.runSync(
-          "UPDATE transactions SET type=?, category=?, amount=?, note=?, date=?, synced=? WHERE id=?",
-          [
-            tx.type,
-            tx.category,
-            tx.amount,
-            tx.note ?? null,
-            tx.date,
-            tx.synced ? 1 : 0,
-            tx.id,
-          ]
-        );
+        dbHelper.update({ ...tx, ...patch });
       }
     },
 
@@ -247,7 +192,7 @@ export const useTxStore = create<TransactionState>((set, get) => {
       const items = get().items.filter((t) => t.id !== id);
       set({ items });
 
-      db.runSync("DELETE FROM transactions WHERE id=?", [id]);
+      dbHelper.delete(id);
 
       try {
         const token = await AsyncStorage.getItem("token");
@@ -286,9 +231,7 @@ export const useTxStore = create<TransactionState>((set, get) => {
               }
             );
             if (res.status === 200 || res.status === 201) {
-              db.runSync("UPDATE transactions SET synced=1 WHERE id=?", [
-                tx.id,
-              ]);
+              dbHelper.markSynced(tx.id);
               set({
                 items: get().items.map((t) =>
                   t.id === tx.id ? { ...t, synced: true } : t
@@ -376,7 +319,7 @@ export const useTxStore = create<TransactionState>((set, get) => {
 
     clearLocal: async () => {
       try {
-        db.execSync("DELETE FROM transactions");
+        dbHelper.clear();
         set({ items: [] });
         console.log("本地缓存已清理");
       } catch (e) {

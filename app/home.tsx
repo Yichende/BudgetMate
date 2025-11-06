@@ -3,8 +3,8 @@ import { useThemedStyles } from "@/src/hooks/useThemedStyles";
 import { Circle, Text as SkiaText, useFont } from "@shopify/react-native-skia";
 import dayjs from "dayjs";
 import { router } from "expo-router";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Dimensions, ScrollView, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Dimensions, RefreshControl, ScrollView, View } from "react-native";
 import { Calendar, LocaleConfig } from "react-native-calendars";
 import { Button, Card, Text } from "react-native-paper";
 import type { SharedValue } from "react-native-reanimated";
@@ -139,6 +139,7 @@ export default function Home() {
   const [selected, setSelected] = useState(dayjs().format("YYYY-MM-DD"));
   const [showType, setShowType] = useState<"income" | "expense">("expense");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   // 直接从 store 获取数据和方法
   const items = useTxStore((s) => s.items) || [];
@@ -225,6 +226,18 @@ export default function Home() {
     }
   );
 
+  // 下拉刷新
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await load();
+    } catch (e) {
+      console.warn("refresh failed", e);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [load]);
+
   const handleBarPress = (index: number) => {
     setSelectedBarIndex(index);
     setShowBarTooltip(true);
@@ -294,8 +307,22 @@ export default function Home() {
   useEffect(() => {
     const initData = async () => {
       setLoading(true);
-      await load();
-      setLoading(false);
+      
+      try {
+        // // 先从 SQLite 获取本地缓存
+        // const localItems = dbHelper.getAll();
+        // if (localItems.length > 0) {
+        //   setLoading(false);
+        //   useTxStore.setState({ items: localItems }); // 先显示缓存
+        // }
+  
+        // 尝试加载网络数据
+        await load();
+      } catch (err) {
+        console.error("初始化数据失败:", err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     initData();
@@ -314,18 +341,24 @@ export default function Home() {
     );
   }
 
-  if (!items || items.length === 0) {
-    return (
-      <View style={styles.centerBox}>
-        <Text>暂无数据</Text>
-        <Button onPress={() => load()}>重新加载</Button>
-      </View>
-    );
-  }
+  // if (!items || items.length === 0) {
+  //   return (
+  //     <View style={styles.centerBox}>
+  //       <Text>暂无数据</Text>
+  //       <Button onPress={() => load()}>重新加载</Button>
+  //     </View>
+  //   );
+  // }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollBox}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      <ScrollView style={styles.scrollBox}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+        />
+      }>
         {/* 日历 */}
         <Animated.View entering={FadeInUp.duration(400)}>
           <Calendar

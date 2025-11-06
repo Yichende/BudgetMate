@@ -7,7 +7,7 @@ import {
   FlatList,
   ListRenderItemInfo,
   RefreshControl,
-  View
+  View,
 } from "react-native";
 import {
   Appbar,
@@ -18,7 +18,7 @@ import {
   List,
   Modal,
   Portal,
-  Text
+  Text,
 } from "react-native-paper";
 import {
   categoryIcons,
@@ -75,7 +75,12 @@ export default function BillsDetailsPage() {
       padding: 20,
       borderRadius: 12,
     },
-    modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12, color: t.colors.text, },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: "bold",
+      marginBottom: 12,
+      color: t.colors.text,
+    },
     bottomSheet: {
       position: "absolute",
       bottom: 0,
@@ -260,8 +265,8 @@ export default function BillsDetailsPage() {
               selectedCategories.length === 0 ? "view-list" : undefined // 多选时在文字里渲染图标
             }
             onPress={() => setModalVisible(true)}
-            textColor="#7A46A8"
-            buttonColor="#F7E8FF">
+            textColor={theme.colors.secondary}
+            buttonColor={theme.colors.chipSelectedBg}>
             <SelectedCategoriesDisplay
               selectedCategories={selectedCategories}
               categoryIcons={categoryIcons}
@@ -269,12 +274,25 @@ export default function BillsDetailsPage() {
           </Button>
         </View>
         <View style={styles.summaryRow}>
-          <Button
-            mode="text"
-            textColor="#FFFEE8"
-            onPress={() => setOpenYMPicker(true)}>
-            {dayjs(currentYM).format("YYYY年MM月")}
-          </Button>
+          <View style={{ alignItems: "center" }}>
+            <Button
+              mode="text"
+              compact
+              textColor="#FFFEE8"
+              onPress={() => setOpenYMPicker(true)}>
+              {dayjs(currentYM).format("YYYY年MM月")}
+            </Button>
+            <View
+              style={{
+                width: "80%", // 线条宽度
+                height: 2,
+                borderRadius: 1,
+                backgroundColor: "#FFFEE8",
+                marginTop: -1, // 向上靠近文字
+              }}
+            />
+          </View>
+
           <Text style={{ marginLeft: "auto", color: "#FDF9CF" }}>
             总支出: ¥{monthlySummary.expense.toFixed(2)}
           </Text>

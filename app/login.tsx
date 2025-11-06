@@ -4,7 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import LottieView from "lottie-react-native";
 import { useState } from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { Button, HelperText, Text, TextInput } from "react-native-paper";
 import Animated, {
   Easing,
@@ -17,13 +17,19 @@ import { useAuthStore } from "../src/store/authStore";
 
 export default function LoginScreen() {
   const theme = useAppTheme();
-  const login = useAuthStore((state) => state.login);
-  const loading = useAuthStore((state) => state.loading);
+  // const login = useAuthStore((state) => state.login);
+  // const loading = useAuthStore((state) => state.loading);
+  const { login, register, loading } = useAuthStore();
   const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const [username, setUsername] = useState("");
+  const [isRegister, setIsRegister] = useState(false);
+
   const [emailError, setEmailError] = useState("");
+  const [usernameError, setUsernameError] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
   // 动画
@@ -34,6 +40,13 @@ export default function LoginScreen() {
 
   const validate = () => {
     let valid = true;
+
+    if (isRegister && !username.trim()) {
+      setUsernameError("用户名不能为空");
+      valid = false;
+    } else {
+      setUsernameError("");
+    }
 
     if (!email) {
       setEmailError("邮箱不能为空");
@@ -61,8 +74,16 @@ export default function LoginScreen() {
   const submit = async () => {
     try {
       if (!validate()) return;
-      const ok = await login(email, password);
-      if (ok) router.replace("/home");
+      if (isRegister) {
+        const ok = await register(username, email, password);
+        if (ok) {
+          setIsRegister(false);
+          router.replace("/home");
+        }
+      } else {
+        const ok = await login(email, password);
+        if (ok) router.replace("/home");
+      }
     } catch (err) {
       console.log(err);
     }
@@ -147,6 +168,24 @@ export default function LoginScreen() {
             </LinearGradient>
           </MaskedView>
 
+          {isRegister && (
+            <>
+              <HelperText
+                type="error"
+                visible={!!usernameError}>
+                {usernameError}
+              </HelperText>
+              <TextInput
+                label="用户名"
+                value={username}
+                onChangeText={setUsername}
+                mode="outlined"
+                style={styles.input}
+                error={!!usernameError}
+              />
+            </>
+          )}
+
           <HelperText
             type="error"
             visible={!!emailError}>
@@ -181,8 +220,17 @@ export default function LoginScreen() {
             onPress={submit}
             loading={loading}
             style={styles.submitBtn}>
-            登录
+            {isRegister ? "注册" : "登录"}
           </Button>
+
+          <View style={{ marginTop: 16, alignItems: "center" }}>
+            <Button
+              mode="text"
+              onPress={() => setIsRegister(!isRegister)}
+              textColor={theme.colors.primary}>
+              {isRegister ? "已有账号？去登录" : "没有账号？去注册"}
+            </Button>
+          </View>
         </Animated.View>
       </Animated.View>
     </Animated.View>

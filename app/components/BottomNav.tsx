@@ -8,22 +8,27 @@ export default function BottomNav() {
   const pathname = usePathname();
   const theme = useAppTheme();
   const styles = useThemedStyles((theme) => ({
-    bottom: {
+    container: {
       position: "absolute",
       left: 0,
       right: 0,
       bottom: 0,
       justifyContent: "space-around",
-      backgroundColor: theme.colors.background
+      backgroundColor: theme.colors.background,
     },
   }));
 
   return (
-    <Appbar style={styles.bottom}>
+    <Appbar style={styles.container}>
       <Appbar.Action
         icon="chart-bar"
         onPress={() => router.push("/home")}
-        color={pathname === "/home" ? "#8A0993" : undefined}
+        color={
+          pathname === "/home"
+            ? theme.colors.primary
+            : theme.colors.onSurfaceVariant
+        }
+        size={pathname === "/home" ? 32 : 26}
       />
       <Appbar.Action
         icon="file-document"
@@ -31,12 +36,22 @@ export default function BottomNav() {
           console.log("go bills-details");
           router.push("/bills-details");
         }}
-        color={pathname === "/bills-details" ? "#8A0993" : undefined}
+        color={
+          pathname === "/bills-details"
+            ? theme.colors.primary
+            : theme.colors.onSurfaceVariant
+        }
+        size={pathname === "/bills-details" ? 32 : 26}
       />
       <Appbar.Action
         icon="cog"
         onPress={() => router.push("/settings")}
-        color={pathname === "/settings" ? "#8A0993" : undefined}
+        color={
+          pathname === "/settings"
+            ? theme.colors.primary
+            : theme.colors.onSurfaceVariant
+        }
+        size={pathname === "/settings" ? 32 : 26}
       />
     </Appbar>
   );
