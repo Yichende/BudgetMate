@@ -1,11 +1,10 @@
 import axios from "axios";
-import Constants from "expo-constants";
 
 console.log("✅ api.ts 已加载");
 
 let authToken: string | null = null;
 
-const PORT = 3000;
+const PORT = 5000;
 
 export const setAuthToken = (token: string | null) => {
   authToken = token;
@@ -13,24 +12,27 @@ export const setAuthToken = (token: string | null) => {
 
 // 获取局域网 IP 的函数
 export const getBaseURL = () => {
-  try {
-    const debuggerHost =
-      Constants?.manifest2?.extra?.expoGo?.debuggerHost ||
-      Constants?.expoConfig?.hostUri;
+  // try {
+  //   const debuggerHost =
+  //     Constants?.manifest2?.extra?.expoGo?.debuggerHost ||
+  //     Constants?.expoConfig?.hostUri;
 
-    if (!debuggerHost) {
-      console.warn("⚠️ 无法获取调试主机地址，回退到 10.0.2.2");
-      return `http://10.0.2.2:${PORT}/api`;
-    }
+  //   if (!debuggerHost) {
+  //     console.warn("⚠️ 无法获取调试主机地址，回退到 10.0.2.2");
+  //     return `http://10.0.2.2:${PORT}/api`;
+  //   }
 
-    const ip = debuggerHost.split(":")[0];
-    const baseURL = `http://${ip}:${PORT}/api`;
-    console.log("✅ 获取到局域网 API 地址:", baseURL);
-    return baseURL;
-  } catch (err) {
-    console.error("❌ 获取调试主机地址失败，使用备用地址:", err);
-    return `http://10.0.2.2:${PORT}/api`;
-  }
+  //   const ip = debuggerHost.split(":")[0];
+  //   const baseURL = `http://${ip}:${PORT}/api`;
+  //   console.log("✅ 获取到局域网 API 地址:", baseURL);
+  //   return baseURL;
+  // } catch (err) {
+  //   console.error("❌ 获取调试主机地址失败，使用备用地址:", err);
+  //   return `http://10.0.2.2:${PORT}/api`;
+  // }
+  const baseURL = `http://81.71.146.204:${PORT}/api`;
+  console.log("✅ 使用公网 API 地址:", baseURL);
+  return baseURL;
 };
 
 
