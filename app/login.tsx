@@ -14,6 +14,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useAuthStore } from "../src/store/authStore";
+import ErrorToast from "./components/ErrorToast";
 
 export default function LoginScreen() {
   const theme = useAppTheme();
@@ -31,6 +32,7 @@ export default function LoginScreen() {
   const [emailError, setEmailError] = useState("");
   const [usernameError, setUsernameError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [globalError, setGlobalError] = useState("");
 
   // 动画
   const scale = useSharedValue(1);
@@ -73,19 +75,30 @@ export default function LoginScreen() {
 
   const submit = async () => {
     try {
+      setGlobalError("");
       if (!validate()) return;
+
       if (isRegister) {
-        const ok = await register(username, email, password);
-        if (ok) {
+        const res = await register(username, email, password);
+        if (!res.ok) {
+          setGlobalError(res.message ?? "");
+          return;
+        } else {
           setIsRegister(false);
           router.replace("/home");
         }
       } else {
-        const ok = await login(email, password);
-        if (ok) router.replace("/home");
+        const res = await login(email, password);
+        if (!res.ok) {
+          setGlobalError(res.message ?? "");
+          return;
+        } else {
+          router.replace("/home");
+        }
       }
     } catch (err) {
       console.log(err);
+      setGlobalError("请求失败，请检查网络连接");
     }
   };
 
@@ -135,6 +148,12 @@ export default function LoginScreen() {
     <Animated.View
       entering={FadeIn.duration(400)}
       style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      {globalError !== "" && (
+        <ErrorToast
+          message={globalError}
+          onHide={() => setGlobalError("")}
+        />
+      )}
       <Animated.View style={afterAnimatedStyle}>
         <Animated.View style={animatedStyle}>
           <LottieView

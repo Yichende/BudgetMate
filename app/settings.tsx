@@ -1,10 +1,11 @@
 import { useAppTheme } from "@/src/constants/theme";
+import dayjs from "dayjs";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
 import { useRouter } from "expo-router";
 import * as Sharing from "expo-sharing";
 import { Alert, StyleSheet, View } from "react-native";
-import { Button, Switch, Text, useTheme } from "react-native-paper";
+import { Button, Card, Switch, Text, useTheme } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthStore } from "../src/store/authStore";
 import { useTxStore } from "../src/store/transactionStore";
@@ -18,6 +19,29 @@ export default function SettingsPage() {
   const store = useTxStore();
   const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
+
+  const user = useAuthStore((state) => state.user);
+  const token = useAuthStore((state) => state.token);
+
+  // 格式化注册时间
+  const formatRegisterDuration = (createdAt: string) => {
+    if (!createdAt) return "";
+
+    const start = dayjs(createdAt);
+    const now = dayjs();
+
+    const diffYears = now.diff(start, "year");
+    const diffMonths = now.diff(start, "month") % 12;
+    const diffDays = now.diff(start, "day") % 30;
+
+    if (diffYears >= 1) {
+      return `${diffYears}年${diffMonths}月${diffDays}日`;
+    } else if (diffMonths >= 1) {
+      return `${diffMonths}个月${diffDays}日`;
+    } else {
+      return `${now.diff(start, "day")}日`;
+    }
+  };
 
   const exportData = async () => {
     try {
@@ -60,10 +84,31 @@ export default function SettingsPage() {
   const logoutSubmit = async () => {
     await logout();
     router.replace("/login");
-  }
+  };
+
+  const testBtn = async () => {
+    console.log("TEST===");
+    // const token = AsyncStorage.getItem("token");
+    console.log("user:", user);
+  };
 
   return (
-    <SafeAreaView style={[styles.container, {backgroundColor: theme.colors.background}]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}>
+
+      {user && (
+        <Card style={{ marginBottom: 20, padding: 15 }}>
+          <Text
+            variant="titleMedium"
+            style={{ marginBottom: 5 }}>
+            用户信息
+          </Text>
+          <Text>用户名：{user.username}</Text>
+          <Text>邮箱：{user.email}</Text>
+          <Text>已注册：{formatRegisterDuration(user.created_at)}</Text>
+        </Card>
+      )}
+
       <View style={styles.row}>
         <Text>深色模式</Text>
         <Switch
@@ -71,6 +116,12 @@ export default function SettingsPage() {
           onValueChange={toggleDarkMode}
         />
       </View>
+
+      <Button
+        mode="contained"
+        onPress={testBtn}>
+        测试
+      </Button>
 
       <Button
         mode="contained"
@@ -85,9 +136,9 @@ export default function SettingsPage() {
         导入数据
       </Button>
       <Button
-      mode="contained"
-      onPress={logoutSubmit}
-      style={{ marginTop: 10}}>
+        mode="contained"
+        onPress={logoutSubmit}
+        style={{ marginTop: 10 }}>
         退出登录
       </Button>
     </SafeAreaView>

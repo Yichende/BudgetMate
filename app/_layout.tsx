@@ -1,3 +1,4 @@
+import { useAuthStore } from "@/src/store/authStore";
 import * as Font from "expo-font";
 import { Stack, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
@@ -17,8 +18,10 @@ export default function RootLayout() {
   const segments = useSegments(); // 获取当前路径
   const isLogin = segments[0] === "login"; // 判断是不是 login 页面
 
+  const restore = useAuthStore((state) => state.restore)
+
   useEffect(() => {
-    async function loadFonts() {
+    async function init() {
       await Font.loadAsync({
         Inter: require("../assets/fonts/Inter-Regular.ttf"),
         "Inter-Bold": require("../assets/fonts/Inter-Bold.ttf"),
@@ -26,8 +29,9 @@ export default function RootLayout() {
         "NotoSansSC-Bold": require("../assets/fonts/NotoSansSC-Bold.ttf"),
       });
       setFontsLoaded(true);
+      await restore();
     }
-    loadFonts();
+    init();
   }, []);
 
   return (
