@@ -5,7 +5,7 @@ import * as FileSystem from "expo-file-system";
 import { useRouter } from "expo-router";
 import * as Sharing from "expo-sharing";
 import { Alert, StyleSheet, View } from "react-native";
-import { Button, Card, Switch, Text, useTheme } from "react-native-paper";
+import { Avatar, Button, Card, Divider, Switch, Text, useTheme } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthStore } from "../src/store/authStore";
 import { useTxStore } from "../src/store/transactionStore";
@@ -89,25 +89,61 @@ export default function SettingsPage() {
   const testBtn = async () => {
     console.log("TEST===");
     // const token = AsyncStorage.getItem("token");
-    console.log("user:", user);
+    console.log("user: ", user);
   };
 
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}>
 
-      {user && (
-        <Card style={{ marginBottom: 20, padding: 15 }}>
-          <Text
-            variant="titleMedium"
-            style={{ marginBottom: 5 }}>
-            用户信息
-          </Text>
-          <Text>用户名：{user.username}</Text>
-          <Text>邮箱：{user.email}</Text>
-          <Text>已注册：{formatRegisterDuration(user.created_at)}</Text>
-        </Card>
-      )}
+{user && (
+  <Card
+    style={{
+      marginBottom: 20,
+      paddingVertical: 20,
+      paddingHorizontal: 16,
+      borderRadius: 16,
+      elevation: 3,                   // 安卓阴影
+      shadowColor: "#000",           // iOS 阴影
+      shadowOpacity: 0.12,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 3 },
+    }}
+  >
+    {/* 顶部：头像 + 用户名 */}
+    <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
+      <Avatar.Text
+        label={user.username?.[0]?.toUpperCase() ?? "U"}
+        size={48}
+        style={{ marginRight: 12 }}
+      />
+
+      <View>
+        <Text variant="titleLarge" style={{ fontWeight: "600" }}>
+          {user.username}
+        </Text>
+        <Text variant="bodySmall" style={{ color: "gray" }}>
+          用户信息
+        </Text>
+      </View>
+    </View>
+
+    <Divider style={{ marginVertical: 10 }} />
+
+    {/* 详情信息 */}
+    <View style={{ gap: 8 }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+        <Text variant="bodyMedium" style={{ color: "#666" }}>邮箱</Text>
+        <Text variant="bodyMedium">{user.email}</Text>
+      </View>
+
+      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+        <Text variant="bodyMedium" style={{ color: "#666" }}>已注册时间</Text>
+        <Text variant="bodyMedium">{formatRegisterDuration(user.created_at)}</Text>
+      </View>
+    </View>
+  </Card>
+)}
 
       <View style={styles.row}>
         <Text>深色模式</Text>
@@ -116,12 +152,6 @@ export default function SettingsPage() {
           onValueChange={toggleDarkMode}
         />
       </View>
-
-      <Button
-        mode="contained"
-        onPress={testBtn}>
-        测试
-      </Button>
 
       <Button
         mode="contained"
