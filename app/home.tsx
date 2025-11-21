@@ -308,14 +308,7 @@ export default function Home() {
     const initData = async () => {
       setLoading(true);
       
-      try {
-        // // 先从 SQLite 获取本地缓存
-        // const localItems = dbHelper.getAll();
-        // if (localItems.length > 0) {
-        //   setLoading(false);
-        //   useTxStore.setState({ items: localItems }); // 先显示缓存
-        // }
-  
+      try {  
         // 尝试加载网络数据
         await load();
       } catch (err) {
@@ -406,7 +399,7 @@ export default function Home() {
             style={styles.toggleBtn}>
             收入
           </Button>
-          <Button onPress={() => console.log(monthlySeries.data)}>测试</Button>
+          {/* <Button onPress={() => console.log(monthlySeries.data)}>测试</Button> */}
         </View>
 
         {/* 每日折线图 */}

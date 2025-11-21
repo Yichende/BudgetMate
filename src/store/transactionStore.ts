@@ -308,8 +308,10 @@ export const useTxStore = create<TransactionState>((set, get) => {
         (a, b) => dayjs(a, "YYYY-MM").unix() - dayjs(b, "YYYY-MM").unix()
       );
 
+      const last6 = months.slice(-6);
+
       return {
-        data: months.map((m) => ({
+        data: last6.map((m) => ({
           month: dayjs(m, "YYYY-MM").format("MMM"),
           income: grouped[m].income,
           expense: grouped[m].expense,

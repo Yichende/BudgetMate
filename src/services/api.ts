@@ -6,7 +6,15 @@ console.log("✅ api.ts 已加载");
 
 let authToken: string | null = null;
 
+// 生产环境url
+const PROD_BASE_URL = "http://yichend.top"
 const PORT = 5000;
+
+// 判断是否为开发环境
+export const isDevelopment =
+process.env.NODE_ENV === "development" ||
+__DEV__ === true;
+
 let isRefreshing = false;
 let refreshQueue: ((token: string | null) => void)[] = [];
 
@@ -16,6 +24,15 @@ export const setAuthToken = (token: string | null) => {
 
 // 获取局域网 IP 的函数
 export const getBaseURL = () => {
+
+  // 若为生产环境
+  if (!isDevelopment) {
+    const url = `${PROD_BASE_URL}:${PORT}/api`
+    console.log("✅ 使用公网 API 地址:", url);
+    return url;
+  }
+
+  // 若为开发环境
   try {
     const debuggerHost =
       Constants?.manifest2?.extra?.expoGo?.debuggerHost ||
@@ -34,7 +51,7 @@ export const getBaseURL = () => {
     console.error("❌ 获取调试主机地址失败，使用备用地址:", err);
     return `http://10.0.2.2:${PORT}/api`;
   }
-  // const baseURL = `http://81.71.146.204:${PORT}/api`;
+  // const baseURL = `http://yichend.top:${PORT}/api`;
   // console.log("✅ 使用公网 API 地址:", baseURL);
   // return baseURL;
 };
