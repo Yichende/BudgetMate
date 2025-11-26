@@ -140,6 +140,7 @@ export default function Home() {
   const [showType, setShowType] = useState<"income" | "expense">("expense");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const initDoneRef = useRef(false);
 
   // 直接从 store 获取数据和方法
   const items = useTxStore((s) => s.items) || [];
@@ -306,15 +307,26 @@ export default function Home() {
   // 加载数据
   useEffect(() => {
     const initData = async () => {
-      setLoading(true);
-      
+      const hasLocalItems = items && items.length > 0;
+
+      if (!initDoneRef.current && !hasLocalItems) {
+        setLoading(true);
+      }
+
       try {  
         // 尝试加载网络数据
-        await load();
+        if (!initDoneRef.current) {
+          await load();
+        } else {
+          load().catch((e) => console.warn("backgroud load failed", e));
+        }
       } catch (err) {
         console.error("初始化数据失败:", err);
       } finally {
-        setLoading(false);
+        if (!initDoneRef.current) {
+          setLoading(false);
+          initDoneRef.current = true;
+        }
       }
     };
 
@@ -333,15 +345,6 @@ export default function Home() {
       </View>
     );
   }
-
-  // if (!items || items.length === 0) {
-  //   return (
-  //     <View style={styles.centerBox}>
-  //       <Text>暂无数据</Text>
-  //       <Button onPress={() => load()}>重新加载</Button>
-  //     </View>
-  //   );
-  // }
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>

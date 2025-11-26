@@ -76,6 +76,7 @@ type TransactionState = {
   };
   clearLocal: () => Promise<void>;
   hasLoadedFromNetwork: boolean;
+  hasLocalLoaded: boolean;
 };
 
 export const useTxStore = create<TransactionState>((set, get) => {
@@ -83,15 +84,26 @@ export const useTxStore = create<TransactionState>((set, get) => {
     items: [],
     isSyncing: false,
     hasLoadedFromNetwork: false,
+    hasLocalLoaded: false,
 
     // load 从 API + SQLite 同步
     load: async (forceNetwork = false) => {
-      const { hasLoadedFromNetwork } = get();
+      const { hasLoadedFromNetwork, hasLocalLoaded } = get();
 
-      if (hasLoadedFromNetwork && !forceNetwork) {
-        set({ items: dbHelper.getAll() });
-        return;
+      // 若本地已有数据，优先展示UI
+      if (get().items.length > 0 || hasLocalLoaded) {
+        // 本地读一次
+        if (!hasLocalLoaded) {
+          set({ items: dbHelper.getAll(), hasLocalLoaded: true });
+        }
+
+        // 若不强制更新，则直接返回（避免阻塞UI）
+        if (!forceNetwork) return;
       }
+      // if (hasLoadedFromNetwork && !forceNetwork) {
+      //   set({ items: dbHelper.getAll() });
+      //   return;
+      // }
       try {
         const token = await AsyncStorage.getItem("token");
 
@@ -103,7 +115,9 @@ export const useTxStore = create<TransactionState>((set, get) => {
             return;
           } else {
             console.warn("没有 token 且无网络，只能使用本地缓存");
-            set({ items: dbHelper.getAll() });
+            if (!hasLocalLoaded) {
+              set({ items: dbHelper.getAll(), hasLocalLoaded: true });
+            }
             return;
           }
         }
@@ -114,13 +128,15 @@ export const useTxStore = create<TransactionState>((set, get) => {
         if (res.status !== 200) throw new Error("加载账单失败");
 
         const bills: Transaction[] = res.data;
-        set({ items: bills, hasLoadedFromNetwork: true });
+        set({ items: bills, hasLoadedFromNetwork: true, hasLocalLoaded: true });
 
         // 使用事务批量插入
         dbHelper.replaceAll(bills);
       } catch (err) {
         console.error("❌ load bills error, fallback to local", err);
-        set({ items: dbHelper.getAll() });
+        if (!hasLocalLoaded) {
+          set({ items: dbHelper.getAll(), hasLocalLoaded: true });
+        }
       }
     },
 
@@ -296,22 +312,29 @@ export const useTxStore = create<TransactionState>((set, get) => {
 
     monthlySummarySeries: () => {
       const items = get().items;
+    
+      // 计算最近 6 个月
+      const last6Months: string[] = Array.from({ length: 6 }).map((_, i) =>
+        dayjs().subtract(i, "month").format("YYYY-MM")
+      ).reverse(); // 保证从旧到新排序
+    
       const grouped: Record<string, { income: number; expense: number }> = {};
+    
+      last6Months.forEach((m) => {
+        grouped[m] = { income: 0, expense: 0 };
+      });
+    
+      // 只遍历 items 一次，并且只处理 last6Months 内的账单
       items.forEach((t) => {
         const month = dayjs(t.date).format("YYYY-MM");
-        if (!grouped[month]) grouped[month] = { income: 0, expense: 0 };
+        if (!grouped[month]) return; // 非最近六个月的跳过
+    
         if (t.type === "income") grouped[month].income += t.amount;
         else grouped[month].expense += t.amount;
       });
-
-      const months = Object.keys(grouped).sort(
-        (a, b) => dayjs(a, "YYYY-MM").unix() - dayjs(b, "YYYY-MM").unix()
-      );
-
-      const last6 = months.slice(-6);
-
+    
       return {
-        data: last6.map((m) => ({
+        data: last6Months.map((m) => ({
           month: dayjs(m, "YYYY-MM").format("MMM"),
           income: grouped[m].income,
           expense: grouped[m].expense,

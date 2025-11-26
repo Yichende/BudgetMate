@@ -1,6 +1,6 @@
 import { useAppTheme } from "@/src/constants/theme";
 import { useThemedStyles } from "@/src/hooks/useThemedStyles";
-import { usePathname, useRouter } from "expo-router";
+import { Href, usePathname, useRouter } from "expo-router";
 import { Appbar } from "react-native-paper";
 
 export default function BottomNav() {
@@ -18,41 +18,32 @@ export default function BottomNav() {
     },
   }));
 
+  const tabs: {icon: string; path: Href}[] = [
+    { icon: "chart-bar", path: "/home" },
+    { icon: "file-document", path: "/bills-details" },
+    { icon: "cog", path: "/settings" },
+  ];
+
+  const isHome = pathname === "/home" || pathname === "/";
+
   return (
     <Appbar style={styles.container}>
-      <Appbar.Action
-        icon="chart-bar"
-        onPress={() => router.push("/home")}
-        color={
-          pathname === "/home"
-            ? theme.colors.primary
-            : theme.colors.onSurfaceVariant
-        }
-        size={pathname === "/home" ? 32 : 26}
-      />
-      <Appbar.Action
-        icon="file-document"
-        onPress={() => {
-          console.log("go bills-details");
-          router.push("/bills-details");
-        }}
-        color={
-          pathname === "/bills-details"
-            ? theme.colors.primary
-            : theme.colors.onSurfaceVariant
-        }
-        size={pathname === "/bills-details" ? 32 : 26}
-      />
-      <Appbar.Action
-        icon="cog"
-        onPress={() => router.push("/settings")}
-        color={
-          pathname === "/settings"
-            ? theme.colors.primary
-            : theme.colors.onSurfaceVariant
-        }
-        size={pathname === "/settings" ? 32 : 26}
-      />
+      {tabs.map((t) => {
+        const isActive =
+          t.path === "/home" ? isHome : pathname === t.path;
+
+        return (
+          <Appbar.Action
+            key={String(t.path)}
+            icon={t.icon}
+            onPress={() => router.push(t.path)}
+            color={
+              isActive ? theme.colors.primary : theme.colors.onSurfaceVariant
+            }
+            size={isActive ? 32 : 26}
+          />
+        );
+      })}
     </Appbar>
   );
 }
