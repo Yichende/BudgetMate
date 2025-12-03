@@ -51,7 +51,7 @@ export const getBaseURL = () => {
     console.error("❌ 获取调试主机地址失败，使用备用地址:", err);
     return `http://10.0.2.2:${PORT}/api`;
   }
-  // const baseURL = `http://yichend.top:${PORT}/api`;
+  // const baseURL = `${PROD_BASE_URL}:${PORT}/api`;
   // console.log("✅ 使用公网 API 地址:", baseURL);
   // return baseURL;
 };

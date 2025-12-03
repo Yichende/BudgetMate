@@ -1,0 +1,58 @@
+# Exclude node_modules native build artifacts
+node_modules/*/android/build/
+node_modules/*/android/.cxx/
+node_modules/*/android/.gradle/
+node_modules/*/android/.idea/
+
+# React Native modules with heavy C++ builds
+node_modules/react-native-reanimated/android/build/
+node_modules/react-native-reanimated/android/.cxx/
+node_modules/react-native-gesture-handler/android/build/
+node_modules/react-native-gesture-handler/android/.cxx/
+node_modules/react-native-screens/android/build/
+node_modules/react-native-screens/android/.cxx/
+node_modules/@shopify/react-native-skia/android/build/
+node_modules/@shopify/react-native-skia/android/.cxx/
+node_modules/expo-modules-core/android/build/
+node_modules/expo-modules-core/android/.cxx/
+
+# Android project build output
+android/app/build/
+android/.gradle/
+android/.idea/
+
+# iOS build output
+ios/build/
+ios/DerivedData/
+ios/Pods/
+
+# Expo & Metro cache
+.expo/
+.expo-shared/
+.expo3/
+.expo2/
+.expo1/
+metro-cache/
+.cache/
+dist/
+build/
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# System files
+.DS_Store
+
+# Editor
+.vscode/
+
+# Temp
+tmp/
+temp/

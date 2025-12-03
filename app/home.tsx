@@ -80,10 +80,20 @@ export default function Home() {
     toggle: { flexDirection: "row", justifyContent: "center", marginTop: 10 },
     toggleBtn: { marginHorizontal: 5 },
     chartCard: { margin: 10 },
-    empty: { textAlign: "center", color: theme.colors.emptyText, marginVertical: 20 },
+    empty: {
+      textAlign: "center",
+      color: theme.colors.emptyText,
+      marginVertical: 20,
+    },
     scrollBox: { marginBottom: 70 },
-    centerBox: { flex: 1, justifyContent: "center", alignItems: "center", color: theme.colors.text, backgroundColor: theme.colors.background },
-  
+    centerBox: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      color: theme.colors.text,
+      backgroundColor: theme.colors.background,
+    },
+
     // 6月总计柱状图
     centeredTooltip: {
       position: "absolute",
@@ -313,7 +323,7 @@ export default function Home() {
         setLoading(true);
       }
 
-      try {  
+      try {
         // 尝试加载网络数据
         if (!initDoneRef.current) {
           await load();
@@ -347,14 +357,17 @@ export default function Home() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-      <ScrollView style={styles.scrollBox}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-        />
-      }>
+    <SafeAreaView
+      style={styles.container}
+      edges={["top", "left", "right"]}>
+      <ScrollView
+        style={styles.scrollBox}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          />
+        }>
         {/* 日历 */}
         <Animated.View entering={FadeInUp.duration(400)}>
           <Calendar
@@ -382,9 +395,17 @@ export default function Home() {
         {/* 月汇总 */}
         <Card style={styles.summaryCard}>
           <Card.Content>
-            <Text variant="titleMedium" style={{ color: theme.colors.text }}>本月汇总({ym})</Text>
-            <Text style={{ color: theme.colors.income }}>收入：{cnCurrency(income)}</Text>
-            <Text style={{ color: theme.colors.expense }}>支出：{cnCurrency(expense)}</Text>
+            <Text
+              variant="titleMedium"
+              style={{ color: theme.colors.text }}>
+              本月汇总({ym})
+            </Text>
+            <Text style={{ color: theme.colors.income }}>
+              收入：{cnCurrency(income)}
+            </Text>
+            <Text style={{ color: theme.colors.expense }}>
+              支出：{cnCurrency(expense)}
+            </Text>
           </Card.Content>
         </Card>
 
@@ -408,7 +429,9 @@ export default function Home() {
         {/* 每日折线图 */}
         <Card style={styles.chartCard}>
           <Card.Content>
-            <Text variant="titleMedium" style={{ color: theme.colors.text }}>
+            <Text
+              variant="titleMedium"
+              style={{ color: theme.colors.text }}>
               每日{showType === "expense" ? "支出" : "收入"}趋势
             </Text>
             {dailySeries.dataPoints.some((point) => point.y > 0) ? (
@@ -445,7 +468,11 @@ export default function Home() {
                         />
                         <Area
                           points={points.y}
-                          color={`${showType === "expense" ? theme.colors.expense : theme.colors.income}33`}
+                          color={`${
+                            showType === "expense"
+                              ? theme.colors.expense
+                              : theme.colors.income
+                          }33`}
                           y0={chartBounds.bottom}
                           animate={{ type: "spring" }}
                           curveType="linear"
@@ -474,7 +501,11 @@ export default function Home() {
         {/* 月度汇总柱状图 */}
         <Card style={styles.chartCard}>
           <Card.Content>
-            <Text variant="titleMedium" style={{ color: theme.colors.text }}>近6个月收支对比</Text>
+            <Text
+              variant="titleMedium"
+              style={{ color: theme.colors.text }}>
+              近6个月收支对比
+            </Text>
             {monthlySeries.data && monthlySeries.data.length > 0 ? (
               <View
                 style={{ height: 240, width: screenWidth - 40 }}

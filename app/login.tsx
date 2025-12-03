@@ -16,7 +16,7 @@ import Animated, {
 import { useAuthStore } from "../src/store/authStore";
 import ErrorToast from "./components/ErrorToast";
 
-export default function LoginScreen() {
+export default function Login() {
   const theme = useAppTheme();
   // const login = useAuthStore((state) => state.login);
   // const loading = useAuthStore((state) => state.loading);
