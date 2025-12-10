@@ -1,4 +1,4 @@
-package com.anonymous.BudgetMate
+package com.yichend.budgetmate
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

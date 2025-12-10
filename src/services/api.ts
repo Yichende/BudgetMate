@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import Constants from "expo-constants";
 
-console.log("✅ api.ts 已加载");
+
 
 let authToken: string | null = null;
 
@@ -24,37 +24,26 @@ export const setAuthToken = (token: string | null) => {
 
 // 获取局域网 IP 的函数
 export const getBaseURL = () => {
-
-  // 若为生产环境
-  if (!isDevelopment) {
-    const url = `${PROD_BASE_URL}:${PORT}/api`
-    console.log("✅ 使用公网 API 地址:", url);
-    return url;
+  // 优先读取环境变量
+  const envURL = process.env.EXPO_PUBLIC_API_BASE_URL;
+  if (envURL) {
+    console.log("✅ 使用环境变量 API 地址:", envURL);
+    return envURL;
   }
 
-  // 若为开发环境
-  try {
-    const debuggerHost =
-      Constants?.manifest2?.extra?.expoGo?.debuggerHost ||
-      Constants?.expoConfig?.hostUri;
-
-    if (!debuggerHost) {
-      console.warn("⚠️ 无法获取调试主机地址，回退到 10.0.2.2");
-      return `http://10.0.2.2:${PORT}/api`;
-    }
-
-    const ip = debuggerHost.split(":")[0];
-    const baseURL = `http://${ip}:${PORT}/api`;
-    console.log("✅ 获取到局域网 API 地址:", baseURL);
-    return baseURL;
-  } catch (err) {
-    console.error("❌ 获取调试主机地址失败，使用备用地址:", err);
-    return `http://10.0.2.2:${PORT}/api`;
+  // 读取 app.json extra
+  const extraURL = Constants.expoConfig?.extra?.apiBaseURL;
+  if (extraURL) {
+    console.log("✅ 使用 app.json extra API 地址:", extraURL);
+    return extraURL;
   }
-  // const baseURL = `${PROD_BASE_URL}:${PORT}/api`;
-  // console.log("✅ 使用公网 API 地址:", baseURL);
-  // return baseURL;
+
+  // 默认 fallback
+  console.warn("⚠️ API 地址未配置，使用本地 fallback: http://10.0.2.2:5000/api");
+  return "http://10.0.2.2:5000/api";
 };
+
+console.log("✅ api.ts 已加载, baseURL: ",getBaseURL());
 
 export const refreshTokenRequest = async () => {
   console.log("正在刷新token...");

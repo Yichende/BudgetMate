@@ -374,7 +374,10 @@ export default function Home() {
             current={selected}
             onDayPress={(d) => {
               setSelected(d.dateString);
-              router.push(`/bills/${d.dateString}`);
+              router.push({
+                pathname: "/bills/[date]",
+                params: { date: d.dateString }
+              });
             }}
             onMonthChange={(m) =>
               setSelected(dayjs(m.dateString).date(1).format("YYYY-MM-DD"))

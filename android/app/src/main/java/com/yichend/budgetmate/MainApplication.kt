@@ -1,4 +1,4 @@
-package com.anonymous.BudgetMate
+package com.yichend.budgetmate
 
 import android.app.Application
 import android.content.res.Configuration

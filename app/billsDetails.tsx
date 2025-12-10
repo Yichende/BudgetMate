@@ -208,7 +208,12 @@ export default function BillsDetailsPage() {
                 <List.Item
                   title={`${t.category} ¥${t.amount.toFixed(2)}`}
                   description={`${timeStr}  ${t.note ?? ""}`}
-                  onPress={() => router.push(`/bills/${t.date}?id=${t.id}`)}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/bills/[date]",
+                      params: { date: t.date, id: t.id },
+                    })
+                  }
                   left={(props) => (
                     <List.Icon
                       {...props}

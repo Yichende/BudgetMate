@@ -20,7 +20,7 @@ export default function BottomNav() {
 
   const tabs: {icon: string; path: Href}[] = [
     { icon: "chart-bar", path: "/home" },
-    { icon: "file-document", path: "/bills-details" },
+    { icon: "file-document", path: "/billsDetails" },
     { icon: "cog", path: "/settings" },
   ];
 
