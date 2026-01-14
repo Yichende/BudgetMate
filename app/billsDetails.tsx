@@ -201,7 +201,7 @@ export default function BillsDetailsPage() {
             renderItem={({ item: t }: BillItemProps) => {
               const amountText =
                 (t.type === "income" ? "+" : "-") + t.amount.toFixed(2);
-              const amountColor = t.type === "income" ? "#4CAF50" : "#F44336";
+              const amountColor = t.type === "income" ? theme.colors.income : theme.colors.expense;
               const timeStr = dayjs(t.date).format("HH:mm");
 
               return (
@@ -218,7 +218,7 @@ export default function BillsDetailsPage() {
                     <List.Icon
                       {...props}
                       icon={categoryIcons[t.category]}
-                      color={t.type === "income" ? "#4CAF50" : "#F44336"}
+                      color={t.type === "income" ? theme.colors.income : theme.colors.expense }
                     />
                   )}
                   right={() => (
