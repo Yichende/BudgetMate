@@ -2,9 +2,9 @@
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
-## Download prebuild version
+## Download
 
-https://expo.dev/artifacts/eas/fK3Zr17TRZBc7XR5Kh1PJn.apk
+http://download.yichend.top/budgetmate.apk
 
 ## Get started
 
