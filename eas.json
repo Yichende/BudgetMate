@@ -28,6 +28,7 @@
       }
     },
     "production": {
+      "distribution": "store",
       "releaseChannel": "production",
       "android": {
         "buildType": "apk"
@@ -35,7 +36,7 @@
       "env": {
         "EXPO_NO_NEW_ARCH": "1",
         "NPM_CONFIG_LEGACY_PEER_DEPS": "true",
-        "EXPO_PUBLIC_API_BASE_URL": "https://yichend.top/api"
+        "EXPO_PUBLIC_API_BASE_URL": "http://yichend.top:5000/api"
       }
     }
   },
