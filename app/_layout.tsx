@@ -1,4 +1,3 @@
-import { useAuthStore } from "@/src/store/authStore";
 import * as Font from "expo-font";
 import { Stack, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
@@ -18,18 +17,21 @@ export default function RootLayout() {
   const segments = useSegments(); // 获取当前路径
   const isLogin = segments[0] === "login"; // 判断是不是 login 页面
 
-  const restore = useAuthStore((state) => state.restore)
-
   useEffect(() => {
     async function init() {
-      await Font.loadAsync({
-        Inter: require("../assets/fonts/Inter-Regular.ttf"),
-        "Inter-Bold": require("../assets/fonts/Inter-Bold.ttf"),
-        NotoSansSC: require("../assets/fonts/NotoSansSC-Regular.ttf"),
-        "NotoSansSC-Bold": require("../assets/fonts/NotoSansSC-Bold.ttf"),
-      });
-      setFontsLoaded(true);
-      await restore();
+      try {
+        await Promise.all([
+          await Font.loadAsync({
+            Inter: require("../assets/fonts/Inter-Regular.ttf"),
+            "Inter-Bold": require("../assets/fonts/Inter-Bold.ttf"),
+            NotoSansSC: require("../assets/fonts/NotoSansSC-Regular.ttf"),
+            "NotoSansSC-Bold": require("../assets/fonts/NotoSansSC-Bold.ttf"),
+          }),
+        ]);
+        setFontsLoaded(true);
+      } catch (err) {
+        console.warn("初始化失败", err);
+      }
     }
     init();
   }, []);
@@ -38,10 +40,10 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <AppThemeContext.Provider value={theme}>
-            <PaperProvider theme={theme}>
-              <Stack screenOptions={{ headerShown: false }} />
-              {!isLogin && <BottomNav />}
-            </PaperProvider>
+          <PaperProvider theme={theme}>
+            <Stack screenOptions={{ headerShown: false }} />
+            {!isLogin && <BottomNav />}
+          </PaperProvider>
         </AppThemeContext.Provider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

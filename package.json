@@ -5,9 +5,9 @@
   "private": true,
   "scripts": {
     "start": "expo start",
-    "dev": "cross-env NODE_ENV=development expo start",
-    "devc": "cross-env NODE_ENV=development expo start -c",
-    "prod": "cross-env NODE_ENV=production expo start",
+    "dev": "cross-env EXPO_PUBLIC_API_BASE_URL=http://10.0.2.2:5000/api expo start",
+    "devc": "cross-env EXPO_PUBLIC_API_BASE_URL=http://10.0.2.2:5000/api expo start -c",
+    "prod": "cross-env EXPO_PUBLIC_API_BASE_URL=http://yichend.top:5000/api expo start",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo run:android",
     "ios": "expo run:ios",

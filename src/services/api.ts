@@ -1,6 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import Constants from "expo-constants";
 
 
 
@@ -9,11 +8,6 @@ let authToken: string | null = null;
 // 生产环境url
 const PROD_BASE_URL = "http://yichend.top"
 const PORT = 5000;
-
-// 判断是否为开发环境
-export const isDevelopment =
-process.env.NODE_ENV === "development" ||
-__DEV__ === true;
 
 let isRefreshing = false;
 let refreshQueue: ((token: string | null) => void)[] = [];
@@ -29,13 +23,6 @@ export const getBaseURL = () => {
   if (envURL) {
     console.log("✅ 使用环境变量 API 地址:", envURL);
     return envURL;
-  }
-
-  // 读取 app.json extra
-  const extraURL = Constants.expoConfig?.extra?.apiBaseURL;
-  if (extraURL) {
-    console.log("✅ 使用 app.json extra API 地址:", extraURL);
-    return extraURL;
   }
 
   // 默认 fallback
