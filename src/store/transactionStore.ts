@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuthStore } from "./authStore";
 
 import NetInfo from "@react-native-community/netinfo";
 import dayjs from "dayjs";
@@ -105,7 +106,7 @@ export const useTxStore = create<TransactionState>((set, get) => {
       //   return;
       // }
       try {
-        const token = await AsyncStorage.getItem("token");
+        const token = useAuthStore.getState().token;
 
         if (!token) {
           const state = await NetInfo.fetch();

@@ -1,3 +1,4 @@
+import { useAuthStore } from "@/src/store/authStore";
 import * as Font from "expo-font";
 import { Stack, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
@@ -16,6 +17,7 @@ export default function RootLayout() {
 
   const segments = useSegments(); // 获取当前路径
   const isLogin = segments[0] === "login"; // 判断是不是 login 页面
+  const hasHydrated = useAuthStore.persist.hasHydrated();
 
   useEffect(() => {
     async function init() {
@@ -35,6 +37,10 @@ export default function RootLayout() {
     }
     init();
   }, []);
+
+  if (!fontsLoaded || !hasHydrated) {
+    return null;
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
